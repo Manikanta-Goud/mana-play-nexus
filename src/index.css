@@ -8,33 +8,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Gaming Dark Theme */
+    --background: 220 26% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 26% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 26% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 271 81% 56%;
     --primary-foreground: 210 40% 98%;
+    --primary-glow: 271 91% 70%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 19% 16%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 19% 16%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 198 93% 60%;
+    --accent-foreground: 220 26% 8%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 240 19% 16%;
+    --input: 240 19% 16%;
+    --ring: 271 81% 56%;
+
+    /* Gaming specific colors */
+    --gaming-purple: 271 81% 56%;
+    --gaming-cyan: 198 93% 60%;
+    --gaming-dark: 220 26% 8%;
+    --gaming-card: 220 26% 10%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--gaming-purple)), hsl(var(--gaming-cyan)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--gaming-card)), hsl(240 19% 12%));
+    
+    /* Effects */
+    --glow-primary: 0 0 30px hsl(var(--gaming-purple) / 0.3);
+    --glow-accent: 0 0 20px hsl(var(--gaming-cyan) / 0.2);
 
     --radius: 0.5rem;
 
