@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit } from "lucide-react";
+import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp } from "lucide-react";
 
 interface GameDashboardProps {
   username: string;
@@ -15,6 +15,9 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
   const [selectedMap, setSelectedMap] = useState<string | null>(null);
   const [showModeModal, setShowModeModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [activeProfileTab, setActiveProfileTab] = useState<string>('overview');
+  const [showMatchHistoryModal, setShowMatchHistoryModal] = useState(false);
+  const [showRegisteredMatchesModal, setShowRegisteredMatchesModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [selectedTeamMode, setSelectedTeamMode] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
@@ -268,7 +271,9 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
     rank: "Heroic",
     wins: 342,
     kills: 15670,
-    matches: 1240
+    matches: 1240,
+    walletBalance: 2580,
+    totalEarnings: 15420
   };
 
   const recentMatches = [
@@ -1210,90 +1215,225 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               </Card>
             </div>
 
-            {/* Tabs Content */}
-            <div className="grid lg:grid-cols-2 gap-8">
-              {/* Recent Matches */}
-              <div>
-                <div className="flex items-center space-x-3 mb-4">
-                  <History className="h-6 w-6 text-gaming-cyan" />
-                  <h3 className="text-2xl font-bold text-foreground">Recent Matches</h3>
+            {/* Wallet Balance Section */}
+            <div className="bg-gradient-to-r from-gaming-purple/20 to-gaming-cyan/20 border border-gaming-purple/30 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Wallet className="h-8 w-8 text-gaming-cyan" />
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Wallet Balance</h3>
+                    <p className="text-sm text-muted-foreground">Available funds for tournaments</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {recentMatches.map((match) => (
-                    <Card key={match.id} className="bg-gradient-card border-gaming-purple/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              match.result === 'Victory' ? 'bg-green-500/20 text-green-400' :
-                              match.result === 'Defeat' ? 'bg-red-500/20 text-red-400' :
-                              'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {match.result}
-                            </div>
-                            <Badge variant="outline" className="bg-gaming-purple/10 border-gaming-purple/30 text-gaming-purple">
-                              {match.mode}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{match.time}</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Map: <span className="text-foreground font-semibold">{match.map}</span></p>
-                            <p className="text-muted-foreground">Position: <span className="text-gaming-cyan font-semibold">#{match.position}</span></p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Kills: <span className="text-red-400 font-semibold">{match.kills}</span></p>
-                            <p className="text-muted-foreground">Prize: <span className="text-green-400 font-semibold">{match.prize}</span></p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gaming-cyan">₹{userProfile.walletBalance}</p>
+                  <p className="text-sm text-green-400">Total Earnings: ₹{userProfile.totalEarnings}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-4">
+              {/* First Row - Match History and Registered */}
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center space-y-2 h-24 border-gaming-purple/30 text-gaming-purple hover:bg-gaming-purple/10"
+                  onClick={() => setShowMatchHistoryModal(true)}
+                >
+                  <History className="h-8 w-8" />
+                  <span className="text-base font-medium">Match History</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center space-y-2 h-24 border-gaming-cyan/30 text-gaming-cyan hover:bg-gaming-cyan/10"
+                  onClick={() => setShowRegisteredMatchesModal(true)}
+                >
+                  <Clock className="h-8 w-8" />
+                  <span className="text-base font-medium">Registered</span>
+                </Button>
               </div>
 
-              {/* Registered Matches */}
-              <div>
-                <div className="flex items-center space-x-3 mb-4">
-                  <Clock className="h-6 w-6 text-gaming-purple" />
-                  <h3 className="text-2xl font-bold text-foreground">Registered Matches</h3>
-                </div>
-                <div className="space-y-3">
-                  {registeredMatches.map((match) => (
-                    <Card key={match.id} className="bg-gradient-card border-gaming-purple/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <Badge variant="outline" className="bg-gaming-cyan/10 border-gaming-cyan/30 text-gaming-cyan">
-                              {match.mode}
-                            </Badge>
-                            <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              match.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-green-500/20 text-green-400'
-                            }`}>
-                              {match.status}
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{match.date}</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Map: <span className="text-foreground font-semibold">{match.map}</span></p>
-                            <p className="text-muted-foreground">Time: <span className="text-gaming-cyan font-semibold">{match.time}</span></p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Team: <span className="text-gaming-purple font-semibold">{match.team}</span></p>
-                            <p className="text-muted-foreground">Entry: <span className="text-red-400 font-semibold">{match.entry}</span></p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+              {/* Second Row - Deposit and Withdraw */}
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center space-y-2 h-24 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+                  onClick={() => {
+                    // Handle deposit logic
+                    alert('Deposit functionality coming soon!');
+                  }}
+                >
+                  <TrendingUp className="h-8 w-8" />
+                  <span className="text-base font-medium">Deposit</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center space-y-2 h-24 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
+                  onClick={() => {
+                    // Handle withdraw logic
+                    alert('Withdraw functionality coming soon!');
+                  }}
+                >
+                  <DollarSign className="h-8 w-8" />
+                  <span className="text-base font-medium">Withdraw</span>
+                </Button>
               </div>
+
+              {/* Third Row - Help Center (Centered) */}
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center space-y-2 h-24 w-64 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+                  onClick={() => {
+                    // Handle help center logic
+                    alert('Help Center: Contact support at support@managaming.com or call +91-9876543210');
+                  }}
+                >
+                  <HelpCircle className="h-8 w-8" />
+                  <span className="text-base font-medium">Help Center</span>
+                </Button>
+              </div>
+            </div>
+
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Match History Modal */}
+      <Dialog open={showMatchHistoryModal} onOpenChange={setShowMatchHistoryModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gaming-dark border-gaming-purple/30">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-gaming-purple to-gaming-cyan bg-clip-text text-transparent text-center">
+              MATCH HISTORY
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <History className="h-8 w-8 text-gaming-cyan" />
+              <h3 className="text-2xl font-bold text-foreground">Recent Matches</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {recentMatches.map((match) => (
+                <Card key={match.id} className="bg-gradient-card border-gaming-purple/30">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                          match.result === 'Victory' ? 'bg-green-500/20 text-green-400' :
+                          match.result === 'Defeat' ? 'bg-red-500/20 text-red-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {match.result}
+                        </div>
+                        <Badge variant="outline" className="bg-gaming-purple/10 border-gaming-purple/30 text-gaming-purple">
+                          {match.mode}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{match.time}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Map</p>
+                        <p className="text-foreground font-semibold">{match.map}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Position</p>
+                        <p className="text-gaming-cyan font-semibold">#{match.position}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Kills</p>
+                        <p className="text-red-400 font-semibold">{match.kills}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Prize</p>
+                        <p className="text-green-400 font-semibold">{match.prize}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Registered Matches Modal */}
+      <Dialog open={showRegisteredMatchesModal} onOpenChange={setShowRegisteredMatchesModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gaming-dark border-gaming-purple/30">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-gaming-purple to-gaming-cyan bg-clip-text text-transparent text-center">
+              REGISTERED MATCHES
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <Clock className="h-8 w-8 text-gaming-purple" />
+              <h3 className="text-2xl font-bold text-foreground">Upcoming Matches</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {registeredMatches.map((match) => (
+                <Card key={match.id} className="bg-gradient-card border-gaming-purple/30">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <Badge variant="outline" className="bg-gaming-cyan/10 border-gaming-cyan/30 text-gaming-cyan">
+                          {match.mode}
+                        </Badge>
+                        <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                          match.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-green-500/20 text-green-400'
+                        }`}>
+                          {match.status}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{match.date}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Map</p>
+                        <p className="text-foreground font-semibold">{match.map}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Time</p>
+                        <p className="text-gaming-cyan font-semibold">{match.time}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Team</p>
+                        <p className="text-gaming-purple font-semibold">{match.team}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Entry Fee</p>
+                        <p className="text-red-400 font-semibold">{match.entry}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gaming-purple/20">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-muted-foreground text-sm">Prize Pool</p>
+                          <p className="text-green-400 font-bold text-lg">{match.prize}</p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        >
+                          Cancel Registration
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </DialogContent>
