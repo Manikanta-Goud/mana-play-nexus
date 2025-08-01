@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp } from "lucide-react";
+import AdminNotifications, { sampleNotifications } from "@/components/AdminNotifications";
+import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp, Shield } from "lucide-react";
 
 interface GameDashboardProps {
   username: string;
@@ -21,6 +22,23 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [selectedTeamMode, setSelectedTeamMode] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState(sampleNotifications);
+
+  const handleMarkAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, isRead: true }
+          : notification
+      )
+    );
+  };
+
+  const handleDismissNotification = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.filter(notification => notification.id !== notificationId)
+    );
+  };
 
   const games = [
     {
@@ -502,6 +520,12 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                 <p className="text-sm text-muted-foreground">Welcome back</p>
                 <p className="font-semibold text-foreground">{username}</p>
               </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/admin" className="flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin Panel
+                </a>
+              </Button>
               <Button variant="outline" size="sm" onClick={onLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -754,6 +778,15 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Admin Notifications Section */}
+            <div className="max-w-4xl mx-auto">
+              <AdminNotifications
+                notifications={notifications}
+                onMarkAsRead={handleMarkAsRead}
+                onDismiss={handleDismissNotification}
+              />
             </div>
 
             {/* Free Fire Maps */}
