@@ -253,9 +253,9 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gaming-dark">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-gradient-card shadow-sm border-b border-gaming-purple/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
@@ -263,30 +263,30 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
                 variant="ghost"
                 size="sm"
                 onClick={onBackToDashboard}
-                className="mr-2 hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+                className="mr-2 hover:bg-gaming-purple/20 text-gaming-cyan hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
-              <div className="border-l border-gray-300 h-6"></div>
-              <Shield className="h-8 w-8 text-blue-600" />
+              <div className="border-l border-gaming-purple/30 h-6"></div>
+              <Shield className="h-8 w-8 text-gaming-purple" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-sm text-gray-500">Mana Play Nexus Management</p>
+                <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
+                <p className="text-sm text-muted-foreground">Mana Play Nexus Management</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <Badge className={`px-3 py-1 ${adminRole.color}`}>
+                <Badge className={`px-3 py-1 bg-gaming-purple/20 text-gaming-purple border-gaming-purple/30`}>
                   <Shield className="h-3 w-3 mr-1" />
                   {adminRole.level}
                 </Badge>
-                <p className="text-xs text-gray-500 mt-1">User: {username}</p>
+                <p className="text-xs text-muted-foreground mt-1">User: {username}</p>
               </div>
               <Button 
                 variant="outline" 
                 onClick={onLogout}
-                className="hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                className="hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30"
               >
                 Logout
               </Button>
@@ -298,37 +298,37 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-6 bg-gaming-card/50">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
               <BarChart3 className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
             {hasPermission('user_management') && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
+              <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
                 <Users className="h-4 w-4" />
                 User Management
               </TabsTrigger>
             )}
             {hasPermission('game_scheduling') && (
-              <TabsTrigger value="games" className="flex items-center gap-2">
+              <TabsTrigger value="games" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
                 <Calendar className="h-4 w-4" />
                 Game Scheduling
               </TabsTrigger>
             )}
             {hasPermission('security') && (
-              <TabsTrigger value="security" className="flex items-center gap-2">
+              <TabsTrigger value="security" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
                 <Shield className="h-4 w-4" />
                 Anti-Cheat
               </TabsTrigger>
             )}
             {hasPermission('all') && (
-              <TabsTrigger value="protection" className="flex items-center gap-2">
+              <TabsTrigger value="protection" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
                 <DollarSign className="h-4 w-4" />
                 User Protection
               </TabsTrigger>
             )}
             {(hasPermission('reports') || hasPermission('all')) && (
-              <TabsTrigger value="reports" className="flex items-center gap-2">
+              <TabsTrigger value="reports" className="flex items-center gap-2 data-[state=active]:bg-gaming-purple data-[state=active]:text-white">
                 <FileText className="h-4 w-4" />
                 Reports
               </TabsTrigger>
@@ -338,14 +338,14 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
             {/* Role-specific welcome message */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+            <div className="bg-gradient-card border border-gaming-purple/30 rounded-lg p-6">
               <div className="flex items-center space-x-3">
-                <Shield className="h-8 w-8 text-blue-600" />
+                <Shield className="h-8 w-8 text-gaming-purple" />
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-foreground">
                     Welcome, {adminRole.level}!
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {adminRole.permissions.includes('all') 
                       ? 'You have full administrative access to all platform features.'
                       : `You have access to: ${adminRole.permissions.join(', ').replace(/_/g, ' ')}`
@@ -356,26 +356,26 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
+              <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-gaming-cyan" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{users.length}</div>
+                  <div className="text-2xl font-bold text-foreground">{users.length}</div>
                   <p className="text-xs text-muted-foreground">
                     {users.filter(u => u.status === 'active').length} active
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Games</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Games</CardTitle>
+                  <Target className="h-4 w-4 text-gaming-purple" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-foreground">
                     {gameSchedules.filter(g => g.status === 'active').length}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -384,32 +384,32 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Security Alerts</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Security Alerts</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-2xl font-bold text-red-400">
                     {suspiciousActivities.filter(a => a.severity === 'high' || a.severity === 'critical').length}
                   </div>
                   <p className="text-xs text-muted-foreground">High/Critical alerts</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-foreground">
                     ₹{users.reduce((sum, user) => sum + user.investmentAmount, 0).toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">Total user investments</p>
                   {hasPermission('all') && (
                     <div className="mt-2 text-xs">
-                      <span className="text-green-600">↗ +12.5%</span> from last month
+                      <span className="text-green-400">↗ +12.5%</span> from last month
                     </div>
                   )}
                 </CardContent>
@@ -419,27 +419,27 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
             {/* Enhanced dashboard for superadmin */}
             {hasPermission('all') && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="border-red-300 bg-red-50 shadow-lg">
+                <Card className="border-red-500/30 bg-gradient-card shadow-lg">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-red-900 text-lg font-bold">🚨 Critical Alerts</CardTitle>
+                    <CardTitle className="text-red-400 text-lg font-bold">🚨 Critical Alerts</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center p-2 bg-white rounded-md border border-red-200">
-                        <span className="text-sm font-semibold text-red-900">High-Risk Users:</span>
-                        <span className="font-bold text-lg text-red-700 bg-red-100 px-2 py-1 rounded">
+                      <div className="flex justify-between items-center p-2 bg-gaming-dark/50 rounded-md border border-red-500/30">
+                        <span className="text-sm font-semibold text-foreground">High-Risk Users:</span>
+                        <span className="font-bold text-lg text-red-400 bg-red-500/20 px-2 py-1 rounded">
                           {users.filter(u => u.riskLevel === 'high' || u.riskLevel === 'critical').length}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded-md border border-red-200">
-                        <span className="text-sm font-semibold text-red-900">Security Threats:</span>
-                        <span className="font-bold text-lg text-red-700 bg-red-100 px-2 py-1 rounded">
+                      <div className="flex justify-between items-center p-2 bg-gaming-dark/50 rounded-md border border-red-500/30">
+                        <span className="text-sm font-semibold text-foreground">Security Threats:</span>
+                        <span className="font-bold text-lg text-red-400 bg-red-500/20 px-2 py-1 rounded">
                           {suspiciousActivities.filter(a => a.severity === 'critical').length}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded-md border border-red-200">
-                        <span className="text-sm font-semibold text-red-900">Banned Users:</span>
-                        <span className="font-bold text-lg text-red-700 bg-red-100 px-2 py-1 rounded">
+                      <div className="flex justify-between items-center p-2 bg-gaming-dark/50 rounded-md border border-red-500/30">
+                        <span className="text-sm font-semibold text-foreground">Banned Users:</span>
+                        <span className="font-bold text-lg text-red-400 bg-red-500/20 px-2 py-1 rounded">
                           {users.filter(u => u.status === 'banned').length}
                         </span>
                       </div>
@@ -447,7 +447,7 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
                   </CardContent>
                 </Card>
 
-                <Card className="border-green-300 bg-green-50 shadow-lg">
+                <Card className="border-green-500/30 bg-gradient-card shadow-lg">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-green-900 text-lg font-bold">💰 Financial Control</CardTitle>
                   </CardHeader>

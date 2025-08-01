@@ -5,6 +5,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./components/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
+import AdminPanelTest from "./components/AdminPanelTest";
 import AdminPanelOverview from "./components/AdminPanelOverview";
 import { useState } from "react";
 

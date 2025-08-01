@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import AdminNotifications, { sampleNotifications } from "@/components/AdminNotifications";
-import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp, Shield } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { sampleNotifications } from "@/components/AdminNotifications";
+import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp, Shield, Bell, BellRing } from "lucide-react";
 
 interface GameDashboardProps {
   username: string;
@@ -23,6 +24,10 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
   const [selectedTeamMode, setSelectedTeamMode] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [notifications, setNotifications] = useState(sampleNotifications);
+
+  // Admin user detection - only these usernames can access admin panel
+  const ADMIN_USERS = ['admin', 'superadmin', 'moderator'];
+  const isAdminUser = ADMIN_USERS.includes(username.toLowerCase());
 
   const handleMarkAsRead = (notificationId: string) => {
     setNotifications(prev => 
@@ -513,23 +518,81 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       {/* Header */}
       <header className="bg-gradient-card border-b border-gaming-purple/30 p-6">
         <div className="container mx-auto">
-          {/* User Info and Logout - Top Right */}
+          {/* User Info and Notifications - Top Right */}
           <div className="flex justify-end items-center mb-4">
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Welcome back</p>
                 <p className="font-semibold text-foreground">{username}</p>
               </div>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/admin" className="flex items-center">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin Panel
-                </a>
-              </Button>
-              <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              {/* Only show Admin Panel button to admin users */}
+              {isAdminUser && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/admin" className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Panel
+                  </a>
+                </Button>
+              )}
+              {/* Notification Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="relative">
+                    {notifications.filter(n => !n.isRead).length > 0 ? (
+                      <BellRing className="h-4 w-4" />
+                    ) : (
+                      <Bell className="h-4 w-4" />
+                    )}
+                    {notifications.filter(n => !n.isRead).length > 0 && (
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-red-500 text-white text-xs flex items-center justify-center">
+                        {notifications.filter(n => !n.isRead).length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+                  <div className="p-2">
+                    <h3 className="font-semibold text-sm mb-2">Notifications</h3>
+                    {notifications.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4">No notifications</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {notifications.slice(0, 5).map((notification) => (
+                          <div 
+                            key={notification.id} 
+                            className={`p-2 rounded-md cursor-pointer hover:bg-gray-50 border-l-4 ${
+                              notification.type === 'security' ? 'border-l-red-500' :
+                              notification.type === 'maintenance' ? 'border-l-blue-500' :
+                              notification.type === 'announcement' ? 'border-l-green-500' :
+                              'border-l-yellow-500'
+                            } ${!notification.isRead ? 'bg-blue-50' : 'bg-white'}`}
+                            onClick={() => handleMarkAsRead(notification.id)}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{notification.title}</p>
+                                <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                                <p className="text-xs text-gray-400 mt-1">{notification.timestamp}</p>
+                              </div>
+                              {!notification.isRead && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {notifications.length > 5 && (
+                      <DropdownMenuSeparator />
+                    )}
+                    {notifications.length > 5 && (
+                      <DropdownMenuItem className="text-center text-sm text-blue-600 cursor-pointer">
+                        View all notifications
+                      </DropdownMenuItem>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
@@ -780,14 +843,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               </div>
             </div>
 
-            {/* Admin Notifications Section */}
-            <div className="max-w-4xl mx-auto">
-              <AdminNotifications
-                notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onDismiss={handleDismissNotification}
-              />
-            </div>
+
 
             {/* Free Fire Maps */}
             <div>
@@ -1327,6 +1383,21 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                 >
                   <HelpCircle className="h-8 w-8" />
                   <span className="text-base font-medium">Help Center</span>
+                </Button>
+              </div>
+
+              {/* Fourth Row - Logout Button */}
+              <div className="flex justify-center pt-4 border-t border-gaming-purple/30 mt-6">
+                <Button
+                  variant="destructive"
+                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg shadow-lg"
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    onLogout();
+                  }}
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-base font-medium">Logout from Account</span>
                 </Button>
               </div>
             </div>
