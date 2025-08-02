@@ -1,26 +1,41 @@
-import React, { useState } from 'react';
-import LoginForm from '@/components/LoginForm';
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import AppwriteLoginForm from '@/components/AppwriteLoginForm';
 import GameDashboard from '@/components/GameDashboard';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+  const { user, isLoading, logout } = useAuth();
 
-  const handleLogin = (user: string) => {
-    setUsername(user);
-    setIsLoggedIn(true);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-  };
-
-  if (!isLoggedIn) {
-    return <LoginForm onLogin={handleLogin} />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-500 mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  return <GameDashboard username={username} onLogout={handleLogout} />;
+  if (!user) {
+    return <AppwriteLoginForm />;
+  }
+
+  return (
+    <GameDashboard 
+      username={user.userData?.username || user.name} 
+      onLogout={handleLogout} 
+    />
+  );
 };
 
 export default Index;
