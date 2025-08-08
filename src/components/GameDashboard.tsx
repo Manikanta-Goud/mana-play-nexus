@@ -87,9 +87,9 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
   ];
 
   const upcomingMatches = [
-    { time: '14:30', mode: 'BR', prize: '₹5000' },
-    { time: '16:00', mode: 'CS', prize: '₹3000' },
-    { time: '18:30', mode: 'LONEWOLF', prize: '₹2000' },
+    { time: '14:30', mode: 'BR', prize: '5000 Credits' },
+    { time: '16:00', mode: 'CS', prize: '3000 Credits' },
+    { time: '18:30', mode: 'LONEWOLF', prize: '2000 Credits' },
   ];
 
   const freeFireMaps = [
@@ -269,10 +269,10 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
   const timeSlots = generateTimeSlots();
 
   const entryFees = [
-    { id: 'basic', amount: 10, prize: '₹50', slots: 50 },
-    { id: 'silver', amount: 30, prize: '₹150', slots: 30 },
-    { id: 'gold', amount: 50, prize: '₹300', slots: 20 },
-    { id: 'diamond', amount: 100, prize: '₹600', slots: 10 }
+    { id: 'basic', amount: 10, prize: '50 Credits', slots: 50 },
+    { id: 'silver', amount: 30, prize: '150 Credits', slots: 30 },
+    { id: 'gold', amount: 50, prize: '300 Credits', slots: 20 },
+    { id: 'diamond', amount: 100, prize: '600 Credits', slots: 10 }
   ];
 
   // User Profile Data
@@ -299,7 +299,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       kills: 12,
       damage: 2450,
       time: '2 hours ago',
-      prize: '₹150'
+      prize: '150 Credits'
     },
     {
       id: 2,
@@ -310,7 +310,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       kills: 8,
       damage: 1850,
       time: '5 hours ago',
-      prize: '₹0'
+      prize: '0 Credits'
     },
     {
       id: 3,
@@ -321,7 +321,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       kills: 15,
       damage: 3200,
       time: '1 day ago',
-      prize: '₹300'
+      prize: '300 Credits'
     }
   ];
 
@@ -332,8 +332,8 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       map: 'BERMUDA',
       time: '6:00 PM',
       date: 'Today',
-      entry: '₹50',
-      prize: '₹300',
+      entry: '50 Credits',
+      prize: '300 Credits',
       team: 'SQUAD',
       status: 'Upcoming'
     },
@@ -343,8 +343,8 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       map: 'PURGATORY',
       time: '8:30 PM',
       date: 'Today',
-      entry: '₹30',
-      prize: '₹150',
+      entry: '30 Credits',
+      prize: '150 Credits',
       team: '4v4',
       status: 'Upcoming'
     },
@@ -354,8 +354,8 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       map: 'KALAHARI',
       time: '2:00 PM',
       date: 'Tomorrow',
-      entry: '₹100',
-      prize: '₹600',
+      entry: '100 Credits',
+      prize: '600 Credits',
       team: 'SOLO',
       status: 'Registered'
     }
@@ -1061,7 +1061,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               // Step 3: Entry Fee Selection
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-foreground">Choose Entry Fee</h3>
+                  <h3 className="text-xl font-bold text-foreground">Choose Entry Credits</h3>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -1110,46 +1110,123 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   {entryFees.map((fee) => (
                     <Card 
                       key={fee.id}
-                      className="bg-gradient-card border-gaming-purple/30 hover:border-gaming-cyan hover:shadow-glow-primary transition-all duration-300 cursor-pointer group"
+                      className="relative bg-gradient-to-br from-gaming-dark/80 via-slate-900/60 to-gaming-card/80 border-2 border-gaming-purple/30 hover:border-gaming-cyan/60 hover:shadow-2xl hover:shadow-gaming-cyan/20 transition-all duration-500 cursor-pointer group hover:scale-105 backdrop-blur-sm overflow-hidden"
                     >
-                      <CardHeader className="text-center">
-                        <div className="bg-gaming-purple/20 rounded-full p-4 mx-auto w-fit mb-2">
-                          <Crown className="h-8 w-8 text-gaming-purple" />
-                        </div>
-                        <CardTitle className="text-2xl font-bold text-gaming-cyan">
-                          ₹{fee.amount}
-                        </CardTitle>
-                        <CardDescription className="text-gaming-purple">
-                          {fee.id.charAt(0).toUpperCase() + fee.id.slice(1)} Tier
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="text-center space-y-3">
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Prize Pool:</span>
-                            <span className="text-sm font-bold text-green-400">{fee.prize}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Available Slots:</span>
-                            <span className="text-sm font-semibold text-gaming-cyan">{fee.slots}</span>
+                      {/* Glowing background effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-gaming-purple/10 via-gaming-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                      
+                      {/* Animated border glow */}
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-gaming-purple via-gaming-cyan to-gaming-purple opacity-0 group-hover:opacity-20 blur-sm transition-all duration-500"></div>
+                      
+                      <CardHeader className="relative text-center pb-4">
+                        {/* Tier Icon with Animation */}
+                        <div className="relative mx-auto w-fit mb-4">
+                          <div className="absolute inset-0 bg-gradient-to-r from-gaming-purple to-gaming-cyan rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-all duration-500 scale-110"></div>
+                          <div className="relative bg-gradient-to-br from-gaming-purple/30 to-gaming-cyan/30 rounded-full p-4 border-2 border-gaming-purple/50 group-hover:border-gaming-cyan/70 transition-all duration-300">
+                            <Crown className="h-10 w-10 text-gaming-cyan group-hover:text-white transition-all duration-300 group-hover:scale-110" />
                           </div>
                         </div>
                         
-                        <Button 
-                          variant="default"
-                          className="w-full bg-gradient-to-r from-gaming-purple to-gaming-cyan hover:from-gaming-cyan hover:to-gaming-purple text-white font-bold"
-                          onClick={() => {
-                            // Handle registration logic here
-                            alert(`Registered for ₹${fee.amount} slot!`);
-                            setShowModeModal(false);
-                            setSelectedTeamMode(null);
-                            setSelectedTimeSlot(null);
-                            setSelectedMode(null);
-                          }}
-                        >
-                          <Target className="h-4 w-4 mr-2" />
-                          REGISTER ₹{fee.amount}
-                        </Button>
+                        {/* Credits Amount with Glow Effect */}
+                        <div className="relative">
+                          <CardTitle className="text-2xl font-black text-transparent bg-gradient-to-r from-gaming-cyan via-white to-gaming-purple bg-clip-text group-hover:from-white group-hover:via-gaming-cyan group-hover:to-white transition-all duration-500">
+                            {fee.amount} CREDITS
+                          </CardTitle>
+                          <div className="absolute inset-0 text-2xl font-black text-gaming-cyan/20 blur-sm group-hover:text-white/30 transition-all duration-500">
+                            {fee.amount} CREDITS
+                          </div>
+                        </div>
+                        
+                        {/* Tier Badge */}
+                        <div className="mt-2">
+                          <span className="inline-block px-3 py-1 bg-gradient-to-r from-gaming-purple/20 to-gaming-cyan/20 text-gaming-purple group-hover:text-gaming-cyan border border-gaming-purple/50 group-hover:border-gaming-cyan/50 rounded-full text-xs font-semibold uppercase tracking-wide transition-all duration-300">
+                            {fee.id.charAt(0).toUpperCase() + fee.id.slice(1)} Tier
+                          </span>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="relative text-center space-y-4 pb-6">
+                        {/* Prize and Slots Info */}
+                        <div className="space-y-2 bg-gaming-dark/40 rounded-lg p-3 border border-gaming-purple/20 group-hover:border-gaming-cyan/30 transition-all duration-300">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-300 font-medium flex items-center">
+                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                              Prize Pool:
+                            </span>
+                            <span className="text-xs font-semibold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/30">
+                              {fee.prize}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-300 font-medium flex items-center">
+                              <span className="w-1.5 h-1.5 bg-gaming-cyan rounded-full mr-2 animate-pulse"></span>
+                              Available Slots:
+                            </span>
+                            <span className="text-xs font-semibold text-gaming-cyan bg-gaming-cyan/10 px-2 py-0.5 rounded-full border border-gaming-cyan/30">
+                              {fee.slots} Spots
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Enhanced Register Button */}
+                        <div className="relative">
+                          <Button 
+                            variant="default"
+                            className="w-full h-12 bg-gradient-to-r from-gaming-purple via-gaming-cyan to-gaming-purple bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-bold text-sm tracking-wide uppercase border-2 border-gaming-cyan/50 hover:border-white/70 shadow-xl hover:shadow-2xl hover:shadow-gaming-cyan/30 transition-all duration-500 group-hover:scale-105 relative overflow-hidden"
+                            onClick={() => {
+                              // Check if user has sufficient credits
+                              if (userProfile.walletBalance >= fee.amount) {
+                                // Handle registration logic here - deduct credits from user balance
+                                alert(`✅ Successfully registered for ${fee.amount} Credits slot!\n\nCredits deducted: ${fee.amount}\nRemaining Credits: ${userProfile.walletBalance - fee.amount}\n\nGood luck in your match! 🎮`);
+                                setShowModeModal(false);
+                                setSelectedTeamMode(null);
+                                setSelectedTimeSlot(null);
+                                setSelectedMode(null);
+                              } else {
+                                // Insufficient credits
+                                const shortfall = fee.amount - userProfile.walletBalance;
+                                alert(`❌ Insufficient Credits!\n\nRequired: ${fee.amount} Credits\nAvailable: ${userProfile.walletBalance} Credits\nShortfall: ${shortfall} Credits\n\nPlease buy more credits to join this match.`);
+                              }
+                            }}
+                          >
+                            {/* Button background animation */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                            
+                            <div className="relative flex items-center justify-center space-x-3">
+                              <Target className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
+                              <span>REGISTER {fee.amount} CREDITS</span>
+                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            </div>
+                          </Button>
+                          
+                          {/* Credit Status Indicator */}
+                          <div className="absolute -top-2 -right-2">
+                            {userProfile.walletBalance >= fee.amount ? (
+                              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                                <span className="text-white text-xs font-bold">✓</span>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                                <span className="text-white text-xs font-bold">!</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Credit Requirement Info */}
+                        <div className="text-xs text-gray-400 bg-gaming-dark/60 rounded px-3 py-2 border border-gaming-purple/20">
+                          {userProfile.walletBalance >= fee.amount ? (
+                            <span className="text-green-400 flex items-center justify-center">
+                              <span className="w-1 h-1 bg-green-400 rounded-full mr-2"></span>
+                              Sufficient Credits Available
+                            </span>
+                          ) : (
+                            <span className="text-red-400 flex items-center justify-center">
+                              <span className="w-1 h-1 bg-red-400 rounded-full mr-2"></span>
+                              Need {fee.amount - userProfile.walletBalance} More Credits
+                            </span>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -1251,19 +1328,31 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               </Card>
             </div>
 
-            {/* Wallet Balance Section */}
+            {/* Credits Balance Section */}
             <div className="bg-gradient-to-r from-gaming-purple/20 to-gaming-cyan/20 border border-gaming-purple/30 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <Wallet className="h-8 w-8 text-gaming-cyan" />
                   <div>
-                    <h3 className="text-xl font-bold text-foreground">Wallet Balance</h3>
-                    <p className="text-sm text-muted-foreground">Available funds for tournaments</p>
+                    <h3 className="text-xl font-bold text-foreground">Credits Balance</h3>
+                    <p className="text-sm text-muted-foreground">Available credits for matches</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold text-gaming-cyan">₹{userProfile.walletBalance}</p>
-                  <p className="text-sm text-green-400">Total Earnings: ₹{userProfile.totalEarnings}</p>
+                  <p className="text-3xl font-bold text-gaming-cyan">{userProfile.walletBalance} Credits</p>
+                  <p className="text-sm text-green-400">Total Credits Earned: {userProfile.totalEarnings}</p>
+                </div>
+              </div>
+              
+              {/* Credits Info */}
+              <div className="mt-4 p-3 bg-gaming-dark/30 rounded-lg border border-gaming-cyan/20">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Credit Rate:</span>
+                  <span className="text-gaming-cyan font-semibold">1 Credit = ₹1</span>
+                </div>
+                <div className="flex items-center justify-between text-sm mt-1">
+                  <span className="text-muted-foreground">Purchase Method:</span>
+                  <span className="text-gaming-purple font-semibold">UPI/QR Code</span>
                 </div>
               </div>
             </div>
@@ -1291,18 +1380,18 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                 </Button>
               </div>
 
-              {/* Second Row - Deposit and Withdraw */}
+              {/* Second Row - Buy Credits and Withdraw */}
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant="outline"
                   className="flex flex-col items-center space-y-2 h-24 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
                   onClick={() => {
-                    // Handle deposit logic
-                    alert('Deposit functionality coming soon!');
+                    // Handle buy credits logic - QR code payment will be implemented
+                    alert('Buy Credits via QR Code - Payment gateway integration coming soon!');
                   }}
                 >
                   <TrendingUp className="h-8 w-8" />
-                  <span className="text-base font-medium">Deposit</span>
+                  <span className="text-base font-medium">Buy Credits</span>
                 </Button>
 
                 <Button

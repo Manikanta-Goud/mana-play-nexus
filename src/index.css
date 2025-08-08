@@ -260,3 +260,35 @@ All colors MUST be HSL.
     box-shadow: 0 0 20px hsl(var(--gaming-purple) / 0.8), 0 0 30px hsl(var(--gaming-cyan) / 0.4);
   }
 }
+
+/* Enhanced Credit Card Animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes credit-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px hsl(var(--gaming-purple) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--gaming-cyan) / 0.6), 0 0 40px hsl(var(--gaming-purple) / 0.4);
+  }
+}
+
+/* Utility Classes for Credit Cards */
+.bg-size-200 {
+  background-size: 200% 200%;
+}
+
+.bg-pos-0 {
+  background-position: 0% 0%;
+}
+
+.bg-pos-100 {
+  background-position: 100% 100%;
+}
