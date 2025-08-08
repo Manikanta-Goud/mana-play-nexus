@@ -66,17 +66,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       damage: 3200,
       time: '1 day ago',
       prize: '₹300'
-    },
-    {
-      id: 4,
-      mode: 'BR-MODE',
-      map: 'ALPINE',
-      result: 'Top 5',
-      position: 4,
-      kills: 7,
-      damage: 1920,
-      time: '2 days ago',
-      prize: '₹30'
     }
   ];
 
@@ -106,7 +95,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
     {
       id: 3,
       mode: 'LONE WOLF-MODE',
-      map: 'ALPINE',
+      map: 'BERMUDA',
       time: '2:00 PM',
       date: 'Tomorrow',
       entry: '₹100',
@@ -143,15 +132,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       theme: 'savanna',
       playerCount: '50 Players',
       difficulty: 'Medium'
-    },
-    {
-      id: 'alpine',
-      name: 'ALPINE',
-      description: 'Snow-covered mountain terrain with strategic high grounds.',
-      status: 'active',
-      theme: 'snow',
-      playerCount: '50 Players',
-      difficulty: 'Easy'
     },
     {
       id: 'nexterra',

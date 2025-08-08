@@ -38,6 +38,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
+      
+      // Skip auth check if we're on admin routes to avoid Appwrite errors
+      if (window.location.pathname.startsWith('/admin')) {
+        setUser(null);
+        return;
+      }
+      
       const isAuth = await authService.isAuthenticated();
       if (isAuth) {
         const currentUser = await authService.getCurrentUser();

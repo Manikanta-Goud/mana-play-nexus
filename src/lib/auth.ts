@@ -39,37 +39,43 @@ class AuthService {
       
       if (!newAccount) throw new Error('Failed to create account');
 
-      // Create user document in database
-      const userData: UserData = {
-        name,
-        email,
-        username,
-        preferences: {
-          theme: 'dark',
-          notifications: true,
-          privacy: 'public'
-        },
-        gameStats: {
-          gamesPlayed: 0,
-          wins: 0,
-          losses: 0,
-          winRate: 0,
-          rank: 'Beginner',
-          experience: 0
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      const userDocument = await databases.createDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.userCollectionId,
-        newAccount.$id,
-        userData
-      );
-
       // Sign in the user automatically after registration
       await this.signIn(email, password);
+
+      // Try to create user document in database
+      let userDocument = null;
+      try {
+        const userData: UserData = {
+          name,
+          email,
+          username,
+          preferences: {
+            theme: 'dark',
+            notifications: true,
+            privacy: 'public'
+          },
+          gameStats: {
+            gamesPlayed: 0,
+            wins: 0,
+            losses: 0,
+            winRate: 0,
+            rank: 'Beginner',
+            experience: 0
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        userDocument = await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          newAccount.$id,
+          userData
+        );
+      } catch (dbError) {
+        console.warn('Could not create user document - check collection permissions:', dbError);
+        // Continue without user document for now
+      }
       
       return {
         ...newAccount,
@@ -100,12 +106,18 @@ class AuthService {
       
       if (!currentAccount) throw new Error('No current user');
 
-      // Get user data from database
-      const userData = await databases.getDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.userCollectionId,
-        currentAccount.$id
-      );
+      // Try to get user data from database
+      let userData = null;
+      try {
+        userData = await databases.getDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          currentAccount.$id
+        );
+      } catch (dbError) {
+        console.warn('Could not fetch user document - user data not available:', dbError);
+        // Continue without user document
+      }
 
       return {
         ...currentAccount,
@@ -113,6 +125,44 @@ class AuthService {
       };
     } catch (error) {
       console.error('Error getting current user:', error);
+      throw error;
+    }
+  }
+
+  // Create user document (can be called after successful registration)
+  async createUserDocument(userId: string, name: string, email: string, username: string): Promise<UserDocument> {
+    try {
+      const userData: UserData = {
+        name,
+        email,
+        username,
+        preferences: {
+          theme: 'dark',
+          notifications: true,
+          privacy: 'public'
+        },
+        gameStats: {
+          gamesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          winRate: 0,
+          rank: 'Beginner',
+          experience: 0
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const userDocument = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        userId,
+        userData
+      );
+
+      return userDocument as unknown as UserDocument;
+    } catch (error) {
+      console.error('Error creating user document:', error);
       throw error;
     }
   }
@@ -189,9 +239,21 @@ class AuthService {
   // Check if user is authenticated
   async isAuthenticated(): Promise<boolean> {
     try {
+      // Check if required config is available
+      if (!appwriteConfig.projectId || !appwriteConfig.endpoint) {
+        console.warn('Appwrite configuration is incomplete');
+        return false;
+      }
+      
       await account.get();
       return true;
-    } catch {
+    } catch (error: any) {
+      // Don't log errors for admin routes or when user is simply not logged in
+      if (!window.location.pathname.startsWith('/admin') && 
+          !error.message?.includes('unauthorized') && 
+          !error.message?.includes('401')) {
+        console.warn('Authentication check failed:', error.message);
+      }
       return false;
     }
   }

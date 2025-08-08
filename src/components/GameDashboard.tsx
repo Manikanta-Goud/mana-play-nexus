@@ -122,16 +122,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       theme: 'African Safari',
       features: ['Lumberyard', 'Refinery', 'Outpost'],
       status: 'Active'
-    },
-    {
-      id: 'alpine',
-      name: 'ALPINE',
-      description: 'Snow-covered mountain terrain with extreme weather',
-      icon: MapPin,
-      size: '50 Players',
-      theme: 'Snowy Mountains',
-      features: ['Observatory', 'Mill', 'Crash'],
-      status: 'Featured'
     }
   ];
 
@@ -332,17 +322,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       damage: 3200,
       time: '1 day ago',
       prize: '₹300'
-    },
-    {
-      id: 4,
-      mode: 'BR-MODE',
-      map: 'ALPINE',
-      result: 'Top 5',
-      position: 4,
-      kills: 7,
-      damage: 1920,
-      time: '2 days ago',
-      prize: '₹30'
     }
   ];
 
@@ -372,7 +351,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
     {
       id: 3,
       mode: 'LONE WOLF-MODE',
-      map: 'ALPINE',
+      map: 'KALAHARI',
       time: '2:00 PM',
       date: 'Tomorrow',
       entry: '₹100',
@@ -477,38 +456,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
         players: '1 Player',
         duration: '10-15 min',
         features: ['Animal Tracking', 'Resource Gathering', 'Night Survival']
-      }
-    ],
-    alpine: [
-      {
-        id: 'br-alpine',
-        name: 'BR-MODE',
-        fullName: 'Battle Royale - Alpine',
-        description: '50 players face the frozen mountain challenge',
-        icon: Crown,
-        players: '50 Players',
-        duration: '15-20 min',
-        features: ['Avalanche Zone', 'Ice Cave Battles', 'Summit Assault']
-      },
-      {
-        id: 'cs-alpine',
-        name: 'CS-MODE',
-        fullName: 'Clash Squad - Alpine',
-        description: '4v4 tactical combat in snowy terrain',
-        icon: Users,
-        players: '8 Players',
-        duration: '8-12 min',
-        features: ['Frozen Lake', 'Mountain Base', 'Ski Lodge']
-      },
-      {
-        id: 'lonewolf-alpine',
-        name: 'LONE WOLF-MODE',
-        fullName: 'Lone Wolf - Alpine',
-        description: 'Survive alone in the deadly mountain cold',
-        icon: Target,
-        players: '1 Player',
-        duration: '10-15 min',
-        features: ['Extreme Cold', 'Ice Climbing', 'Blizzard Survival']
       }
     ]
   };

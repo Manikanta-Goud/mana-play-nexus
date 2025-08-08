@@ -1,21 +1,25 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./components/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
-import AdminPanelTest from "./components/AdminPanelTest";
 import AdminPanelOverview from "./components/AdminPanelOverview";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
+
+// Component to check if current route is admin
+const useIsAdminRoute = () => {
+  const location = useLocation();
+  return location.pathname.startsWith('/admin');
+};
 
 const AdminPanelWrapper = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminUsername, setAdminUsername] = useState('');
-  const navigate = useNavigate();
 
   const handleAdminLogin = (username: string) => {
     setAdminUsername(username);
@@ -25,11 +29,10 @@ const AdminPanelWrapper = () => {
   const handleAdminLogout = () => {
     setIsAdminLoggedIn(false);
     setAdminUsername('');
-    navigate('/admin');
   };
 
   const handleBackToDashboard = () => {
-    navigate('/');
+    window.location.href = '/';
   };
 
   if (isAdminLoggedIn) {
@@ -50,23 +53,40 @@ const AdminPanelWrapper = () => {
   }
 };
 
-const App = () => {
+// Main app content with conditional AuthProvider
+const AppContent = () => {
+  const isAdminRoute = useIsAdminRoute();
 
+  if (isAdminRoute) {
+    // Admin routes without AuthProvider to avoid Appwrite errors
+    return (
+      <Routes>
+        <Route path="/admin-overview" element={<AdminPanelOverview />} />
+        <Route path="/admin" element={<AdminPanelWrapper />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    );
+  } else {
+    // Regular routes with AuthProvider
+    return (
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
+    );
+  }
+};
+
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/admin-overview" element={<AdminPanelOverview />} />
-              <Route path="/admin" element={<AdminPanelWrapper />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
