@@ -132,6 +132,12 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
       try {
         setIsLoading(true);
         
+        // Check if Appwrite configuration is available
+        if (!appwriteConfig.databaseId || !appwriteConfig.userCollectionId) {
+          console.warn('Appwrite configuration missing, using fallback data');
+          throw new Error('Appwrite configuration incomplete');
+        }
+        
         // Try to fetch real users from Appwrite
         const response = await databases.listDocuments(
           appwriteConfig.databaseId,
@@ -171,134 +177,106 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
           };
         });
         
-        // If no real users exist, add the current logged-in user and some demo users
-        if (realUsers.length === 0) {
-          const demoUsers: User[] = [
-            // Add current user if available
-            ...(user ? [{
-              id: user.$id,
-              username: user.userData?.username || user.name || username,
-              email: user.email,
-              status: 'active' as const,
-              joinDate: user.userData?.createdAt ? new Date(user.userData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-              lastActive: new Date().toISOString().split('T')[0],
-              gamesPlayed: user.userData?.gameStats?.gamesPlayed || 25,
-              winRate: user.userData?.gameStats?.winRate || 45.2,
-              suspiciousActivity: 0,
-              investmentAmount: 2500,
-              riskLevel: 'low' as const
-            }] : []),
-            // Demo users for demonstration
-            {
-              id: 'demo_suspicious',
-              username: 'SuspiciousGamer',
-              email: 'suspicious@example.com',
-              status: 'active',
-              joinDate: '2024-07-20',
-              lastActive: '2024-08-01',
-              gamesPlayed: 50,
-              winRate: 94.5,
-              suspiciousActivity: 8,
-              investmentAmount: 500,
-              riskLevel: 'high'
-            },
-            {
-              id: 'demo_banned',
-              username: 'BannedUser',
-              email: 'banned@example.com',
-              status: 'banned',
-              joinDate: '2024-06-10',
-              lastActive: '2024-07-25',
-              gamesPlayed: 23,
-              winRate: 98.2,
-              suspiciousActivity: 15,
-              investmentAmount: 150,
-              riskLevel: 'critical'
-            },
-            {
-              id: 'demo_regular',
-              username: 'RegularPlayer',
-              email: 'regular@example.com',
-              status: 'active',
-              joinDate: '2024-05-15',
-              lastActive: '2024-08-01',
-              gamesPlayed: 89,
-              winRate: 36.0,
-              suspiciousActivity: 1,
-              investmentAmount: 450,
-              riskLevel: 'low'
-            },
-            {
-              id: 'demo_pro',
-              username: 'ProGamer2024',
-              email: 'pro@example.com',
-              status: 'active',
-              joinDate: '2024-03-10',
-              lastActive: '2024-08-01',
-              gamesPlayed: 245,
-              winRate: 67.8,
-              suspiciousActivity: 2,
-              investmentAmount: 1200,
-              riskLevel: 'medium'
-            }
-          ];
-          
-          setUsers(demoUsers);
-        } else {
+        // If real users were fetched successfully, use them
+        if (realUsers.length > 0) {
           setUsers(realUsers);
+        } else {
+          // Use demo data with current user if no users found
+          setUsers(getFallbackUsers());
         }
         
       } catch (error) {
-        console.error('Error fetching users:', error);
-        
-        // Fallback to demo users if Appwrite fetch fails
-        const fallbackUsers: User[] = [
-          // Add current user if available
-          ...(user ? [{
-            id: user.$id,
-            username: user.userData?.username || user.name || username,
-            email: user.email,
-            status: 'active' as const,
-            joinDate: user.userData?.createdAt ? new Date(user.userData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            lastActive: new Date().toISOString().split('T')[0],
-            gamesPlayed: user.userData?.gameStats?.gamesPlayed || 25,
-            winRate: user.userData?.gameStats?.winRate || 45.2,
-            suspiciousActivity: 0,
-            investmentAmount: 2500,
-            riskLevel: 'low' as const
-          }] : []),
-          {
-            id: 'demo_user_1',
-            username: 'ActivePlayer1',
-            email: 'player1@example.com',
-            status: 'active',
-            joinDate: '2024-06-15',
-            lastActive: '2024-08-01',
-            gamesPlayed: 156,
-            winRate: 45.2,
-            suspiciousActivity: 0,
-            investmentAmount: 850,
-            riskLevel: 'low'
-          },
-          {
-            id: 'demo_user_2',
-            username: 'SuspiciousGamer',
-            email: 'suspicious@example.com',
-            status: 'active',
-            joinDate: '2024-07-20',
-            lastActive: '2024-08-01',
-            gamesPlayed: 50,
-            winRate: 94.5,
-            suspiciousActivity: 8,
-            investmentAmount: 120,
-            riskLevel: 'high'
-          }
-        ];
-        
-        setUsers(fallbackUsers);
+        console.error('Error fetching users from Appwrite:', error);
+        // Always fall back to demo users to ensure admin panel works
+        setUsers(getFallbackUsers());
       } finally {
         setIsLoading(false);
       }
+    };
+
+    const getFallbackUsers = (): User[] => {
+      return [
+        // Add current user if available
+        ...(user ? [{
+          id: user.$id,
+          username: user.userData?.username || user.name || username,
+          email: user.email,
+          status: 'active' as const,
+          joinDate: user.userData?.createdAt ? new Date(user.userData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          lastActive: new Date().toISOString().split('T')[0],
+          gamesPlayed: user.userData?.gameStats?.gamesPlayed || 25,
+          winRate: user.userData?.gameStats?.winRate || 45.2,
+          suspiciousActivity: 0,
+          investmentAmount: 2500,
+          riskLevel: 'low' as const
+        }] : []),
+        // Demo users for demonstration
+        {
+          id: 'demo_user_1',
+          username: 'ActivePlayer1',
+          email: 'player1@example.com',
+          status: 'active',
+          joinDate: '2024-06-15',
+          lastActive: '2024-08-01',
+          gamesPlayed: 156,
+          winRate: 45.2,
+          suspiciousActivity: 0,
+          investmentAmount: 850,
+          riskLevel: 'low'
+        },
+        {
+          id: 'demo_suspicious',
+          username: 'SuspiciousGamer',
+          email: 'suspicious@example.com',
+          status: 'active',
+          joinDate: '2024-07-20',
+          lastActive: '2024-08-01',
+          gamesPlayed: 50,
+          winRate: 94.5,
+          suspiciousActivity: 8,
+          investmentAmount: 120,
+          riskLevel: 'high'
+        },
+        {
+          id: 'demo_banned',
+          username: 'BannedUser',
+          email: 'banned@example.com',
+          status: 'banned',
+          joinDate: '2024-06-10',
+          lastActive: '2024-07-25',
+          gamesPlayed: 23,
+          winRate: 98.2,
+          suspiciousActivity: 15,
+          investmentAmount: 150,
+          riskLevel: 'critical'
+        },
+        {
+          id: 'demo_regular',
+          username: 'RegularPlayer',
+          email: 'regular@example.com',
+          status: 'active',
+          joinDate: '2024-05-15',
+          lastActive: '2024-08-01',
+          gamesPlayed: 89,
+          winRate: 36.0,
+          suspiciousActivity: 1,
+          investmentAmount: 450,
+          riskLevel: 'low'
+        },
+        {
+          id: 'demo_pro',
+          username: 'ProGamer2024',
+          email: 'pro@example.com',
+          status: 'active',
+          joinDate: '2024-03-10',
+          lastActive: '2024-08-01',
+          gamesPlayed: 245,
+          winRate: 67.8,
+          suspiciousActivity: 2,
+          investmentAmount: 1200,
+          riskLevel: 'medium'
+        }
+      ];
     };
 
     fetchRealUsers();
