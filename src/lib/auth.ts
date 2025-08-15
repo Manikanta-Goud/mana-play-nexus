@@ -20,6 +20,20 @@ export interface UserData {
     rank?: string;
     experience?: number;
   };
+  wallet?: {
+    balance?: number;
+    totalEarnings?: number;
+    totalSpent?: number;
+    transactions?: Array<{
+      id: string;
+      type: 'credit' | 'debit' | 'match_entry' | 'match_reward' | 'admin_adjustment';
+      amount: number;
+      description: string;
+      date: string;
+      matchId?: string;
+      adminId?: string;
+    }>;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -61,6 +75,18 @@ class AuthService {
             winRate: 0,
             rank: 'Beginner',
             experience: 0
+          },
+          wallet: {
+            balance: 1000, // Starting balance of 1000 credits
+            totalEarnings: 1000,
+            totalSpent: 0,
+            transactions: [{
+              id: ID.unique(),
+              type: 'credit',
+              amount: 1000,
+              description: 'Welcome bonus - New player registration',
+              date: new Date().toISOString()
+            }]
           },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
@@ -148,6 +174,18 @@ class AuthService {
           winRate: 0,
           rank: 'Beginner',
           experience: 0
+        },
+        wallet: {
+          balance: 1000, // Starting balance of 1000 credits
+          totalEarnings: 1000,
+          totalSpent: 0,
+          transactions: [{
+            id: ID.unique(),
+            type: 'credit',
+            amount: 1000,
+            description: 'Welcome bonus - New player registration',
+            date: new Date().toISOString()
+          }]
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -291,6 +329,113 @@ class AuthService {
     } catch (error) {
       console.error('Error updating password:', error);
       throw error;
+    }
+  }
+
+  // Wallet Management Functions
+  
+  // Deduct credits for match registration
+  async deductMatchEntry(userId: string, amount: number, matchDetails: {
+    matchId: string;
+    mode: string;
+    map: string;
+    time: string;
+  }): Promise<UserData> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      const currentWallet = currentUser.userData?.wallet || {
+        balance: 0,
+        totalEarnings: 0,
+        totalSpent: 0,
+        transactions: []
+      };
+
+      // Check if user has sufficient balance
+      if (currentWallet.balance! < amount) {
+        throw new Error(`Insufficient credits. Required: ${amount}, Available: ${currentWallet.balance}`);
+      }
+
+      // Create transaction record
+      const transaction = {
+        id: ID.unique(),
+        type: 'match_entry' as const,
+        amount: amount,
+        description: `Match entry fee - ${matchDetails.mode} ${matchDetails.map} at ${matchDetails.time}`,
+        date: new Date().toISOString(),
+        matchId: matchDetails.matchId
+      };
+
+      // Update wallet
+      const updatedWallet = {
+        balance: currentWallet.balance! - amount,
+        totalEarnings: currentWallet.totalEarnings,
+        totalSpent: (currentWallet.totalSpent || 0) + amount,
+        transactions: [transaction, ...(currentWallet.transactions || [])].slice(0, 50) // Keep last 50 transactions
+      };
+
+      return await this.updateUserData(userId, { wallet: updatedWallet });
+    } catch (error) {
+      console.error('Error deducting match entry credits:', error);
+      throw error;
+    }
+  }
+
+  // Add credits (for winnings, admin bonuses, etc.)
+  async addCredits(userId: string, amount: number, description: string, type: 'match_reward' | 'admin_adjustment' | 'credit' = 'credit', additionalData?: any): Promise<UserData> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      const currentWallet = currentUser.userData?.wallet || {
+        balance: 0,
+        totalEarnings: 0,
+        totalSpent: 0,
+        transactions: []
+      };
+
+      // Create transaction record
+      const transaction = {
+        id: ID.unique(),
+        type: type,
+        amount: amount,
+        description: description,
+        date: new Date().toISOString(),
+        ...additionalData
+      };
+
+      // Update wallet
+      const updatedWallet = {
+        balance: (currentWallet.balance || 0) + amount,
+        totalEarnings: (currentWallet.totalEarnings || 0) + amount,
+        totalSpent: currentWallet.totalSpent,
+        transactions: [transaction, ...(currentWallet.transactions || [])].slice(0, 50) // Keep last 50 transactions
+      };
+
+      return await this.updateUserData(userId, { wallet: updatedWallet });
+    } catch (error) {
+      console.error('Error adding credits:', error);
+      throw error;
+    }
+  }
+
+  // Get wallet balance
+  async getWalletBalance(userId: string): Promise<number> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      return currentUser.userData?.wallet?.balance || 0;
+    } catch (error) {
+      console.error('Error getting wallet balance:', error);
+      return 0;
+    }
+  }
+
+  // Get transaction history
+  async getTransactionHistory(userId: string, limit: number = 20): Promise<any[]> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      const transactions = currentUser.userData?.wallet?.transactions || [];
+      return transactions.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting transaction history:', error);
+      return [];
     }
   }
 }

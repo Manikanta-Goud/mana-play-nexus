@@ -9,6 +9,9 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<UserData>) => Promise<void>;
   updateGameStats: (gameResult: 'win' | 'loss') => Promise<void>;
+  deductMatchEntry: (amount: number, matchDetails: { matchId: string; mode: string; map: string; time: string; }) => Promise<void>;
+  addCredits: (amount: number, description: string, type?: 'match_reward' | 'admin_adjustment' | 'credit') => Promise<void>;
+  getWalletBalance: () => Promise<number>;
   isAuthenticated: boolean;
 }
 
@@ -131,6 +134,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deductMatchEntry = async (amount: number, matchDetails: { matchId: string; mode: string; map: string; time: string; }) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      
+      const updatedData = await authService.deductMatchEntry(user.$id, amount, matchDetails);
+      
+      // Update the user state with new wallet data
+      setUser(prev => prev ? {
+        ...prev,
+        userData: { ...prev.userData, wallet: updatedData.wallet } as any
+      } : null);
+    } catch (error) {
+      console.error('Deduct match entry error:', error);
+      throw error;
+    }
+  };
+
+  const addCredits = async (amount: number, description: string, type: 'match_reward' | 'admin_adjustment' | 'credit' = 'credit') => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      
+      const updatedData = await authService.addCredits(user.$id, amount, description, type);
+      
+      // Update the user state with new wallet data
+      setUser(prev => prev ? {
+        ...prev,
+        userData: { ...prev.userData, wallet: updatedData.wallet } as any
+      } : null);
+    } catch (error) {
+      console.error('Add credits error:', error);
+      throw error;
+    }
+  };
+
+  const getWalletBalance = async (): Promise<number> => {
+    try {
+      if (!user) return 0;
+      return await authService.getWalletBalance(user.$id);
+    } catch (error) {
+      console.error('Get wallet balance error:', error);
+      return 0;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -139,6 +186,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateProfile,
     updateGameStats,
+    deductMatchEntry,
+    addCredits,
+    getWalletBalance,
     isAuthenticated: !!user,
   };
 

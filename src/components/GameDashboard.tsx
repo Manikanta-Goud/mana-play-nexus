@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { sampleNotifications } from "@/components/AdminNotifications";
-import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp, Shield, Bell, BellRing } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ID } from 'appwrite';
+import { Gamepad2, Target, Users, Crown, Clock, LogOut, Map, MapPin, Zap, Flame, ArrowLeft, ChevronRight, User, Trophy, History, Settings, Star, Edit, CreditCard, Wallet, HelpCircle, DollarSign, TrendingUp, Shield, Bell, BellRing, AlertTriangle, ArrowRight } from "lucide-react";
 
 interface GameDashboardProps {
   username: string;
@@ -13,17 +14,53 @@ interface GameDashboardProps {
 }
 
 const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
+  const { user, deductMatchEntry, getWalletBalance } = useAuth();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [selectedMap, setSelectedMap] = useState<string | null>(null);
   const [showModeModal, setShowModeModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [activeProfileTab, setActiveProfileTab] = useState<string>('overview');
   const [showMatchHistoryModal, setShowMatchHistoryModal] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [transactionHistory, setTransactionHistory] = useState<any[]>([]);
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
+  const [insufficientCreditsData, setInsufficientCreditsData] = useState<{
+    required: number;
+    available: number;
+    shortfall: number;
+    matchDetails: string;
+  } | null>(null);
+
+  // Fetch wallet balance when component mounts or user changes
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      if (user?.userData?.wallet?.balance !== undefined) {
+        setWalletBalance(user.userData.wallet.balance);
+        setTransactionHistory(user.userData.wallet.transactions || []);
+      } else {
+        // Fallback to API call if wallet data not available in user object
+        try {
+          const balance = await getWalletBalance();
+          setWalletBalance(balance);
+          // Note: Transaction history would need a separate API call in the auth service
+          setTransactionHistory([]);
+        } catch (error) {
+          console.error('Error fetching wallet data:', error);
+          setWalletBalance(0);
+          setTransactionHistory([]);
+        }
+      }
+    };
+
+    fetchWalletData();
+  }, [user, getWalletBalance]);
   const [showRegisteredMatchesModal, setShowRegisteredMatchesModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [selectedTeamMode, setSelectedTeamMode] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState(sampleNotifications);
+  // Notifications - real notifications will be loaded from backend
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Admin user detection - only these usernames can access admin panel
   const ADMIN_USERS = ['admin', 'superadmin', 'moderator'];
@@ -53,6 +90,14 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       description: 'Battle Royale Mayhem',
       players: '2.1M',
       status: 'Live'
+    },
+    {
+      id: 'pubg',
+      name: 'PUBG Mobile',
+      icon: Crown,
+      description: 'Tactical Battle Arena',
+      players: '1.8M',
+      status: 'Coming Soon'
     }
   ];
 
@@ -124,6 +169,63 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
       status: 'Active'
     }
   ];
+
+  const pubgMaps = [
+    {
+      id: 'erangel',
+      name: 'ERANGEL',
+      description: 'Classic PUBG battleground with diverse terrain',
+      icon: Map,
+      size: '100 Players',
+      theme: 'Post-Soviet',
+      features: ['School', 'Military Base', 'Pochinki'],
+      status: 'Coming Soon'
+    },
+    {
+      id: 'sanhok',
+      name: 'SANHOK',
+      description: 'Tropical paradise with intense close combat',
+      icon: Target,
+      size: '64 Players',
+      theme: 'Tropical Jungle',
+      features: ['Bootcamp', 'Paradise Resort', 'Ruins'],
+      status: 'Coming Soon'
+    },
+    {
+      id: 'miramar',
+      name: 'MIRAMAR',
+      description: 'Desert map with long-range combat focus',
+      icon: Flame,
+      size: '100 Players',
+      theme: 'Desert Warfare',
+      features: ['Pecado', 'Hacienda', 'Prison'],
+      status: 'Coming Soon'
+    }
+  ];
+
+  // Function to get maps based on selected game
+  const getCurrentGameMaps = () => {
+    switch (selectedGame) {
+      case 'freefire':
+        return freeFireMaps;
+      case 'pubg':
+        return pubgMaps;
+      default:
+        return [];
+    }
+  };
+
+  // Get current game name
+  const getCurrentGameName = () => {
+    switch (selectedGame) {
+      case 'freefire':
+        return 'FREE FIRE';
+      case 'pubg':
+        return 'PUBG MOBILE';
+      default:
+        return '';
+    }
+  };
 
   const teamModes = {
     br: [
@@ -258,7 +360,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
           time: timeString,
           displayTime,
           match,
-          registeredPlayers: Math.floor(Math.random() * Math.min(maxPlayers - 2, 45)) + 2, // Random for demo but within limits
+          registeredPlayers: 0, // Real data - start with 0 players
           maxPlayers
         });
       });
@@ -275,93 +377,28 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
     { id: 'diamond', amount: 100, prize: '600 Credits', slots: 10 }
   ];
 
-  // User Profile Data
+  // User Profile Data - Using real data from authentication
   const userProfile = {
     name: username,
-    freeFireUID: "2847583921",
-    bio: "Professional Free Fire player | Battle Royale enthusiast | Clutch master",
-    level: 65,
-    rank: "Heroic",
-    wins: 342,
-    kills: 15670,
-    matches: 1240,
-    walletBalance: 2580,
-    totalEarnings: 15420
+    freeFireUID: user?.userData?.username || "Not Set",
+    bio: "Gaming enthusiast", // Static for now, can be made editable later
+    level: user?.userData?.gameStats?.experience ? Math.floor(user.userData.gameStats.experience / 100) + 1 : 1,
+    rank: user?.userData?.gameStats?.rank || "Unranked",
+    wins: user?.userData?.gameStats?.wins || 0,
+    kills: user?.userData?.gameStats?.experience || 0, // Using experience as kills proxy for now
+    matches: user?.userData?.gameStats?.gamesPlayed || 0,
+    walletBalance: walletBalance,
+    totalEarnings: user?.userData?.wallet?.totalEarnings || 0
   };
 
-  const recentMatches = [
-    {
-      id: 1,
-      mode: 'BR-MODE',
-      map: 'BERMUDA',
-      result: 'Victory',
-      position: 1,
-      kills: 12,
-      damage: 2450,
-      time: '2 hours ago',
-      prize: '150 Credits'
-    },
-    {
-      id: 2,
-      mode: 'CS-MODE',
-      map: 'PURGATORY',
-      result: 'Defeat',
-      position: 3,
-      kills: 8,
-      damage: 1850,
-      time: '5 hours ago',
-      prize: '0 Credits'
-    },
-    {
-      id: 3,
-      mode: 'LONE WOLF-MODE',
-      map: 'KALAHARI',
-      result: 'Victory',
-      position: 1,
-      kills: 15,
-      damage: 3200,
-      time: '1 day ago',
-      prize: '300 Credits'
-    }
-  ];
+  // Recent matches - will be populated from real match history when implemented
+  const recentMatches: any[] = [];
 
-  const registeredMatches = [
-    {
-      id: 1,
-      mode: 'BR-MODE',
-      map: 'BERMUDA',
-      time: '6:00 PM',
-      date: 'Today',
-      entry: '50 Credits',
-      prize: '300 Credits',
-      team: 'SQUAD',
-      status: 'Upcoming'
-    },
-    {
-      id: 2,
-      mode: 'CS-MODE',
-      map: 'PURGATORY',
-      time: '8:30 PM',
-      date: 'Today',
-      entry: '30 Credits',
-      prize: '150 Credits',
-      team: '4v4',
-      status: 'Upcoming'
-    },
-    {
-      id: 3,
-      mode: 'LONE WOLF-MODE',
-      map: 'KALAHARI',
-      time: '2:00 PM',
-      date: 'Tomorrow',
-      entry: '100 Credits',
-      prize: '600 Credits',
-      team: 'SOLO',
-      status: 'Registered'
-    }
-  ];
+  // Registered matches - will be populated from real data when implemented
+  const registeredMatches: any[] = [];
 
   const mapModes = {
+    // Free Fire Maps Modes
     bermuda: [
       {
         id: 'br-bermuda',
@@ -457,6 +494,73 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
         duration: '10-15 min',
         features: ['Animal Tracking', 'Resource Gathering', 'Night Survival']
       }
+    ],
+    // PUBG Maps Modes
+    erangel: [
+      {
+        id: 'classic-erangel',
+        name: 'CLASSIC MODE',
+        fullName: 'Classic Battle Royale - Erangel',
+        description: '100 players battle in the original PUBG battleground',
+        icon: Crown,
+        players: '100 Players',
+        duration: '25-35 min',
+        features: ['School Battles', 'Military Base', 'Bridge Warfare']
+      },
+      {
+        id: 'arcade-erangel',
+        name: 'ARCADE MODE',
+        fullName: 'Quick Match - Erangel',
+        description: 'Fast-paced 64 player battles',
+        icon: Target,
+        players: '64 Players',
+        duration: '15-20 min',
+        features: ['Quick Loot', 'Fast Zone', 'Action Packed']
+      }
+    ],
+    sanhok: [
+      {
+        id: 'classic-sanhok',
+        name: 'CLASSIC MODE',
+        fullName: 'Classic Battle Royale - Sanhok',
+        description: '64 players in intense jungle combat',
+        icon: Crown,
+        players: '64 Players',
+        duration: '20-25 min',
+        features: ['Bootcamp Drop', 'Cave Systems', 'River Combat']
+      },
+      {
+        id: 'arcade-sanhok',
+        name: 'ARCADE MODE',
+        fullName: 'Quick Match - Sanhok',
+        description: 'Fast jungle warfare',
+        icon: Target,
+        players: '40 Players',
+        duration: '12-15 min',
+        features: ['Dense Combat', 'Quick Rotations', 'Close Quarters']
+      }
+    ],
+    miramar: [
+      {
+        id: 'classic-miramar',
+        name: 'CLASSIC MODE',
+        fullName: 'Classic Battle Royale - Miramar',
+        description: '100 players in desert warfare',
+        icon: Crown,
+        players: '100 Players',
+        duration: '25-35 min',
+        features: ['Long Range Combat', 'Vehicle Focus', 'Desert Tactics']
+      },
+      {
+        id: 'arcade-miramar',
+        name: 'ARCADE MODE',
+        fullName: 'Quick Match - Miramar',
+        description: 'Fast desert combat',
+        icon: Target,
+        players: '64 Players',
+        duration: '15-20 min',
+        features: ['Sniper Battles', 'Vehicle Wars', 'Urban Combat']
+      }
     ]
   };
 
@@ -467,6 +571,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
         <div className="container mx-auto">
           {/* User Info and Notifications - Top Right */}
           <div className="flex justify-end items-center mb-4">
+            {/* User Info and Notifications - Right Side */}
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Welcome back</p>
@@ -657,7 +762,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               {/* Right Side - Map Information */}
               <div className="lg:col-span-2">
                 {(() => {
-                  const currentMap = freeFireMaps.find(map => map.id === selectedMap);
+                  const currentMap = getCurrentGameMaps().find(map => map.id === selectedMap);
                   const MapIcon = currentMap?.icon || Map;
                   return (
                     <Card className="bg-gradient-card border-gaming-purple/30 h-fit">
@@ -736,6 +841,10 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                               <span className="text-muted-foreground">Status:</span>
                               <span className="font-semibold text-gaming-cyan">{currentMap?.status}</span>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Game:</span>
+                              <span className="font-semibold text-gaming-purple">{getCurrentGameName()}</span>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -761,8 +870,10 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   return (
                     <Card 
                       key={game.id}
-                      className="bg-gradient-card border-gaming-purple/30 hover:border-gaming-purple hover:shadow-glow-primary transition-all duration-300 cursor-pointer animate-slide-up"
-                      onClick={() => setSelectedGame(game.id)}
+                      className={`bg-gradient-card border-gaming-purple/30 hover:border-gaming-purple hover:shadow-glow-primary transition-all duration-300 cursor-pointer animate-slide-up ${
+                        game.status === 'Coming Soon' ? 'opacity-60' : ''
+                      }`}
+                      onClick={() => game.status === 'Live' ? setSelectedGame(game.id) : null}
                     >
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -773,7 +884,14 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                               <CardDescription>{game.description}</CardDescription>
                             </div>
                           </div>
-                          <Badge variant="secondary" className="bg-gaming-purple/20 text-gaming-purple">
+                          <Badge 
+                            variant="secondary" 
+                            className={`${
+                              game.status === 'Live' 
+                                ? 'bg-gaming-purple/20 text-gaming-purple' 
+                                : 'bg-yellow-500/20 text-yellow-500'
+                            }`}
+                          >
                             {game.status}
                           </Badge>
                         </div>
@@ -783,6 +901,13 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                           <span className="text-sm text-muted-foreground">Active Players</span>
                           <span className="font-semibold text-gaming-cyan">{game.players}</span>
                         </div>
+                        {game.status === 'Coming Soon' && (
+                          <div className="mt-3 text-center">
+                            <span className="text-sm text-yellow-500 font-medium">
+                              🚀 Launching Soon!
+                            </span>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -790,25 +915,54 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               </div>
             </div>
 
+            {/* Instructions when no game is selected */}
+            <div className="text-center py-12">
+              <div className="bg-gradient-card border border-gaming-purple/30 rounded-lg p-8 max-w-2xl mx-auto">
+                <Gamepad2 className="h-16 w-16 text-gaming-purple mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-foreground mb-3">
+                  Welcome to Mana Gaming Arena!
+                </h3>
+                <p className="text-muted-foreground text-lg mb-4">
+                  Select a game above to view available maps and start your battle experience.
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-sm text-gaming-cyan">
+                  <Zap className="h-4 w-4" />
+                  <span>Maps will appear after game selection</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : selectedGame ? (
+          <div className="space-y-8">
+            {/* Back Button */}
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedGame(null)}
+              className="mb-4"
+            >
+              ← Back to Games
+            </Button>
 
-
-            {/* Free Fire Maps */}
+            {/* Current Game Maps */}
             <div>
               <div className="flex items-center space-x-3 mb-6">
                 <Map className="h-8 w-8 text-gaming-cyan" />
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-gaming-purple to-gaming-cyan bg-clip-text text-transparent">
-                  FREE FIRE MAPS
+                  {getCurrentGameName()} MAPS
                 </h3>
                 <Zap className="h-6 w-6 text-yellow-400 animate-pulse" />
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {freeFireMaps.map((map, index) => {
+                {getCurrentGameMaps().map((map, index) => {
                   const IconComponent = map.icon;
                   return (
                     <Card 
                       key={map.id} 
-                      className="bg-gradient-card border-gaming-purple/30 hover:border-gaming-cyan hover:shadow-glow-primary transition-all duration-300 animate-slide-up group cursor-pointer h-full flex flex-col"
+                      className={`bg-gradient-card border-gaming-purple/30 hover:border-gaming-cyan hover:shadow-glow-primary transition-all duration-300 animate-slide-up group cursor-pointer h-full flex flex-col ${
+                        map.status === 'Coming Soon' ? 'opacity-60' : ''
+                      }`}
                       style={{ animationDelay: `${index * 100}ms` }}
+                      onClick={() => map.status === 'Active' ? setSelectedMap(map.id) : null}
                     >
                       <CardHeader className="text-center pb-2">
                         <div className="relative mb-3">
@@ -823,7 +977,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                         <div className="flex justify-center space-x-2">
                           <Badge 
                             variant="secondary" 
-                            className={map.status === 'Featured' ? 'bg-gaming-purple/30 text-gaming-purple' : 'bg-gaming-cyan/20 text-gaming-cyan'}
+                            className={map.status === 'Active' ? 'bg-gaming-cyan/20 text-gaming-cyan' : 'bg-yellow-500/20 text-yellow-500'}
                           >
                             {map.status}
                           </Badge>
@@ -862,14 +1016,19 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                           <Button 
                             variant="default"
                             size="sm"
-                            className="w-full bg-gradient-to-r from-gaming-purple to-gaming-cyan hover:from-gaming-cyan hover:to-gaming-purple text-white font-bold border-0 shadow-lg hover:shadow-glow-primary transition-all duration-300"
+                            className={`w-full bg-gradient-to-r from-gaming-purple to-gaming-cyan hover:from-gaming-cyan hover:to-gaming-purple text-white font-bold border-0 shadow-lg hover:shadow-glow-primary transition-all duration-300 ${
+                              map.status === 'Coming Soon' ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedMap(map.id);
+                              if (map.status === 'Active') {
+                                setSelectedMap(map.id);
+                              }
                             }}
+                            disabled={map.status === 'Coming Soon'}
                           >
                             <Target className="h-4 w-4 mr-2" />
-                            DROP HERE
+                            {map.status === 'Coming Soon' ? 'COMING SOON' : 'DROP HERE'}
                           </Button>
                         </div>
                       </CardContent>
@@ -877,6 +1036,20 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   );
                 })}
               </div>
+
+              {getCurrentGameMaps().length === 0 && (
+                <div className="text-center py-12">
+                  <div className="bg-gradient-card border border-gaming-purple/30 rounded-lg p-8 max-w-2xl mx-auto">
+                    <Map className="h-16 w-16 text-gaming-purple mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-foreground mb-3">
+                      No Maps Available
+                    </h3>
+                    <p className="text-muted-foreground text-lg">
+                      Maps for {getCurrentGameName()} are coming soon!
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : selectedGame ? (
@@ -946,7 +1119,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
 
       {/* Match Registration Modal */}
       <Dialog open={showModeModal} onOpenChange={setShowModeModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gaming-dark border-gaming-purple/30">
+        <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto bg-gaming-dark border-gaming-purple/30">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gaming-purple to-gaming-cyan bg-clip-text text-transparent">
               {selectedMode?.toUpperCase()} MODE REGISTRATION
@@ -957,8 +1130,8 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
             {!selectedTeamMode ? (
               // Step 1: Team Mode Selection
               <div>
-                <h3 className="text-xl font-bold text-foreground mb-4">Choose Team Mode</h3>
-                <div className="grid gap-4 md:grid-cols-3">
+                <h3 className="text-xl font-bold text-foreground mb-4 text-center">Choose Team Mode</h3>
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                   {(() => {
                     // Get the game mode type from selectedMode (br, cs, lonewolf)
                     const modeType = selectedMode?.split('-')[0] as 'br' | 'cs' | 'lonewolf';
@@ -972,18 +1145,18 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                           className="bg-gradient-card border-gaming-purple/30 hover:border-gaming-cyan hover:shadow-glow-primary transition-all duration-300 cursor-pointer group"
                           onClick={() => setSelectedTeamMode(mode.id)}
                         >
-                          <CardHeader className="text-center">
-                            <IconComponent className="h-12 w-12 text-gaming-purple mx-auto mb-2" />
-                            <CardTitle className="text-xl text-gaming-cyan group-hover:text-white transition-colors">
+                          <CardHeader className="text-center pb-4">
+                            <IconComponent className="h-12 w-12 text-gaming-purple mx-auto mb-3" />
+                            <CardTitle className="text-xl text-gaming-cyan group-hover:text-white transition-colors mb-2">
                               {mode.name}
                             </CardTitle>
-                            <CardDescription className="text-gaming-purple">
+                            <CardDescription className="text-gaming-purple font-semibold text-base">
                               {mode.players}
                             </CardDescription>
                           </CardHeader>
-                          <CardContent className="text-center">
-                            <p className="text-sm text-muted-foreground">{mode.description}</p>
-                            <ChevronRight className="h-5 w-5 text-gaming-cyan mx-auto mt-2" />
+                          <CardContent className="text-center pt-0">
+                            <p className="text-sm text-muted-foreground mb-3">{mode.description}</p>
+                            <ChevronRight className="h-5 w-5 text-gaming-cyan mx-auto" />
                           </CardContent>
                         </Card>
                       );
@@ -1015,7 +1188,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   </p>
                 </div>
 
-                <div className="grid gap-3 max-h-96 overflow-y-auto">
+                <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 max-h-96 overflow-y-auto">
                   {(() => {
                     // Generate dynamic time slots based on selected mode and team
                     const modeType = selectedMode?.split('-')[0];
@@ -1084,7 +1257,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   return (
                     <div className="bg-gaming-card/50 rounded-lg p-4 mb-6">
                       <h4 className="font-bold text-gaming-cyan mb-2">Match Details</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Mode:</span>
                           <span className="ml-2 text-foreground font-semibold">{selectedMode?.toUpperCase()}</span>
@@ -1106,7 +1279,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   );
                 })()}
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {entryFees.map((fee) => (
                     <Card 
                       key={fee.id}
@@ -1118,12 +1291,12 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                       {/* Animated border glow */}
                       <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-gaming-purple via-gaming-cyan to-gaming-purple opacity-0 group-hover:opacity-20 blur-sm transition-all duration-500"></div>
                       
-                      <CardHeader className="relative text-center pb-4">
+                      <CardHeader className="relative text-center pb-3">
                         {/* Tier Icon with Animation */}
-                        <div className="relative mx-auto w-fit mb-4">
+                        <div className="relative mx-auto w-fit mb-3">
                           <div className="absolute inset-0 bg-gradient-to-r from-gaming-purple to-gaming-cyan rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-all duration-500 scale-110"></div>
-                          <div className="relative bg-gradient-to-br from-gaming-purple/30 to-gaming-cyan/30 rounded-full p-4 border-2 border-gaming-purple/50 group-hover:border-gaming-cyan/70 transition-all duration-300">
-                            <Crown className="h-10 w-10 text-gaming-cyan group-hover:text-white transition-all duration-300 group-hover:scale-110" />
+                          <div className="relative bg-gradient-to-br from-gaming-purple/30 to-gaming-cyan/30 rounded-full p-3 border-2 border-gaming-purple/50 group-hover:border-gaming-cyan/70 transition-all duration-300">
+                            <Crown className="h-8 w-8 text-gaming-cyan group-hover:text-white transition-all duration-300 group-hover:scale-110" />
                           </div>
                         </div>
                         
@@ -1145,7 +1318,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                         </div>
                       </CardHeader>
                       
-                      <CardContent className="relative text-center space-y-4 pb-6">
+                      <CardContent className="relative text-center space-y-3 pb-4">
                         {/* Prize and Slots Info */}
                         <div className="space-y-2 bg-gaming-dark/40 rounded-lg p-3 border border-gaming-purple/20 group-hover:border-gaming-cyan/30 transition-all duration-300">
                           <div className="flex justify-between items-center">
@@ -1172,20 +1345,66 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                         <div className="relative">
                           <Button 
                             variant="default"
-                            className="w-full h-12 bg-gradient-to-r from-gaming-purple via-gaming-cyan to-gaming-purple bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-bold text-sm tracking-wide uppercase border-2 border-gaming-cyan/50 hover:border-white/70 shadow-xl hover:shadow-2xl hover:shadow-gaming-cyan/30 transition-all duration-500 group-hover:scale-105 relative overflow-hidden"
-                            onClick={() => {
+                            disabled={isRegistering || userProfile.walletBalance < fee.amount}
+                            className="w-full h-10 bg-gradient-to-r from-gaming-purple via-gaming-cyan to-gaming-purple bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-bold text-sm tracking-wide uppercase border-2 border-gaming-cyan/50 hover:border-white/70 shadow-xl hover:shadow-2xl hover:shadow-gaming-cyan/30 transition-all duration-500 group-hover:scale-105 relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={async () => {
                               // Check if user has sufficient credits
                               if (userProfile.walletBalance >= fee.amount) {
-                                // Handle registration logic here - deduct credits from user balance
-                                alert(`✅ Successfully registered for ${fee.amount} Credits slot!\n\nCredits deducted: ${fee.amount}\nRemaining Credits: ${userProfile.walletBalance - fee.amount}\n\nGood luck in your match! 🎮`);
-                                setShowModeModal(false);
-                                setSelectedTeamMode(null);
-                                setSelectedTimeSlot(null);
-                                setSelectedMode(null);
+                                try {
+                                  setIsRegistering(true);
+                                  
+                                  // Create match details for transaction tracking
+                                  const matchDetails = {
+                                    matchId: ID.unique(),
+                                    mode: selectedMode || 'Battle Royale',
+                                    map: getCurrentGameMaps().find(m => m.id === selectedMap)?.name || 'Unknown',
+                                    time: timeSlots.find(slot => slot.id === selectedTimeSlot)?.displayTime || 'Unknown'
+                                  };
+                                  
+                                  // Deduct credits from user's wallet
+                                  await deductMatchEntry(fee.amount, matchDetails);
+                                  
+                                  // Update local wallet balance
+                                  setWalletBalance(prev => prev - fee.amount);
+                                  
+                                  // Add transaction to local history
+                                  const newTransaction = {
+                                    id: ID.unique(),
+                                    type: 'match_entry' as const,
+                                    amount: fee.amount,
+                                    description: `Match entry fee - ${matchDetails.mode} ${matchDetails.map} at ${matchDetails.time}`,
+                                    date: new Date().toISOString(),
+                                    matchId: matchDetails.matchId
+                                  };
+                                  setTransactionHistory(prev => [newTransaction, ...prev]);
+                                  
+                                  // Show success message
+                                  alert(`✅ Successfully registered for ${fee.amount} Credits slot!\n\nCredits deducted: ${fee.amount}\nRemaining Credits: ${userProfile.walletBalance - fee.amount}\n\nMatch ID: ${matchDetails.matchId}\nGood luck in your match! 🎮`);
+                                  
+                                  // Reset form
+                                  setShowModeModal(false);
+                                  setSelectedTeamMode(null);
+                                  setSelectedTimeSlot(null);
+                                  setSelectedMode(null);
+                                } catch (error: any) {
+                                  console.error('Registration failed:', error);
+                                  alert(`❌ Registration Failed!\n\n${error.message || 'Unable to process registration. Please try again.'}`);
+                                } finally {
+                                  setIsRegistering(false);
+                                }
                               } else {
-                                // Insufficient credits
+                                // Insufficient credits - show modal instead of alert
                                 const shortfall = fee.amount - userProfile.walletBalance;
-                                alert(`❌ Insufficient Credits!\n\nRequired: ${fee.amount} Credits\nAvailable: ${userProfile.walletBalance} Credits\nShortfall: ${shortfall} Credits\n\nPlease buy more credits to join this match.`);
+                                const currentMap = getCurrentGameMaps().find(m => m.id === selectedMap);
+                                const currentSlot = timeSlots.find(slot => slot.id === selectedTimeSlot);
+                                
+                                setInsufficientCreditsData({
+                                  required: fee.amount,
+                                  available: userProfile.walletBalance,
+                                  shortfall: shortfall,
+                                  matchDetails: `${selectedMode || 'Match'} - ${currentMap?.name || 'Unknown Map'} at ${currentSlot?.displayTime || 'Unknown Time'}`
+                                });
+                                setShowInsufficientCreditsModal(true);
                               }
                             }}
                           >
@@ -1193,9 +1412,9 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             
                             <div className="relative flex items-center justify-center space-x-3">
-                              <Target className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
-                              <span>REGISTER {fee.amount} CREDITS</span>
-                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                              <Target className={`h-5 w-5 ${isRegistering ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
+                              <span>{isRegistering ? 'REGISTERING...' : `REGISTER ${fee.amount} CREDITS`}</span>
+                              {!isRegistering && <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>}
                             </div>
                           </Button>
                           
@@ -1214,23 +1433,81 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                         </div>
                         
                         {/* Credit Requirement Info */}
-                        <div className="text-xs text-gray-400 bg-gaming-dark/60 rounded px-3 py-2 border border-gaming-purple/20">
+                        <div className={`text-xs rounded px-3 py-2 border ${
+                          userProfile.walletBalance >= fee.amount 
+                            ? 'bg-green-900/20 border-green-700 text-green-400'
+                            : 'bg-red-900/20 border-red-700 text-red-400'
+                        }`}>
                           {userProfile.walletBalance >= fee.amount ? (
-                            <span className="text-green-400 flex items-center justify-center">
+                            <span className="flex items-center justify-center">
                               <span className="w-1 h-1 bg-green-400 rounded-full mr-2"></span>
                               Sufficient Credits Available
                             </span>
                           ) : (
-                            <span className="text-red-400 flex items-center justify-center">
-                              <span className="w-1 h-1 bg-red-400 rounded-full mr-2"></span>
-                              Need {fee.amount - userProfile.walletBalance} More Credits
-                            </span>
+                            <div className="text-center">
+                              <div className="flex items-center justify-center mb-1">
+                                <span className="w-1 h-1 bg-red-400 rounded-full mr-2"></span>
+                                Need {fee.amount - userProfile.walletBalance} More Credits
+                              </div>
+                              <div className="text-xs text-yellow-400 font-semibold">
+                                💳 Click "BUY CREDITS" below ↓
+                              </div>
+                            </div>
                           )}
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
+
+                {/* Buy Credits Section - Show if user has insufficient credits for any entry fee */}
+                {entryFees.some(fee => userProfile.walletBalance < fee.amount) && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-700 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Wallet className="h-6 w-6 text-yellow-400" />
+                      <h4 className="text-lg font-bold text-yellow-400">Need More Credits?</h4>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-300">
+                          Your current balance: <span className="font-bold text-blue-400">{userProfile.walletBalance} Credits</span>
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Some matches require more credits than you currently have.
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Button
+                          className="w-full h-12 bg-gradient-to-r from-yellow-600 via-orange-600 to-yellow-600 hover:from-yellow-500 hover:via-orange-500 hover:to-yellow-500 text-white font-bold border-2 border-yellow-500 hover:border-yellow-400 shadow-xl hover:shadow-2xl hover:shadow-yellow-500/30 transition-all duration-300 relative overflow-hidden group"
+                          onClick={() => {
+                            // Show the insufficient credits modal with general info
+                            setInsufficientCreditsData({
+                              required: Math.max(...entryFees.map(f => f.amount)),
+                              available: userProfile.walletBalance,
+                              shortfall: Math.max(...entryFees.map(f => f.amount)) - userProfile.walletBalance,
+                              matchDetails: 'Premium Match Entry'
+                            });
+                            setShowInsufficientCreditsModal(true);
+                          }}
+                        >
+                          {/* Button glow effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                          
+                          <div className="relative flex items-center justify-center gap-2">
+                            <DollarSign className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            <span>BUY CREDITS</span>
+                            <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                          </div>
+                        </Button>
+                        <p className="text-xs text-gray-500 text-center">
+                          Instant credit top-up available
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1357,6 +1634,64 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               </div>
             </div>
 
+            {/* Transaction History */}
+            <div className="bg-gradient-card border border-gaming-purple/30 rounded-lg p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <History className="h-6 w-6 text-gaming-purple" />
+                <h3 className="text-xl font-bold text-foreground">Recent Transactions</h3>
+              </div>
+              
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {transactionHistory.length > 0 ? (
+                  transactionHistory.slice(0, 10).map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className={`p-4 rounded-lg border ${
+                        transaction.type === 'match_entry' ? 'bg-red-900/20 border-red-700' :
+                        transaction.type === 'match_reward' ? 'bg-green-900/20 border-green-700' :
+                        transaction.type === 'credit' ? 'bg-blue-900/20 border-blue-700' :
+                        'bg-gray-900/20 border-gray-700'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className={`font-semibold ${
+                            transaction.type === 'match_entry' ? 'text-red-400' :
+                            transaction.type === 'match_reward' ? 'text-green-400' :
+                            transaction.type === 'credit' ? 'text-blue-400' :
+                            'text-gray-400'
+                          }`}>
+                            {transaction.type === 'match_entry' ? '-' : '+'}
+                            {transaction.amount} Credits
+                          </p>
+                          <p className="text-gray-300 text-sm mt-1">{transaction.description}</p>
+                          {transaction.matchId && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              Match ID: {transaction.matchId.slice(-8)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500 text-xs">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </p>
+                          <p className="text-gray-500 text-xs">
+                            {new Date(transaction.date).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No transactions yet</p>
+                    <p className="text-sm">Start playing matches to see your transaction history</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="space-y-4">
               {/* First Row - Match History and Registered */}
@@ -1386,8 +1721,15 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                   variant="outline"
                   className="flex flex-col items-center space-y-2 h-24 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
                   onClick={() => {
-                    // Handle buy credits logic - QR code payment will be implemented
-                    alert('Buy Credits via QR Code - Payment gateway integration coming soon!');
+                    // Open the buy credits modal from profile
+                    setInsufficientCreditsData({
+                      required: 1000,
+                      available: walletBalance,
+                      shortfall: Math.max(1000 - walletBalance, 100),
+                      matchDetails: 'General Credit Top-up'
+                    });
+                    setShowInsufficientCreditsModal(true);
+                    setShowProfileModal(false); // Close profile modal
                   }}
                 >
                   <TrendingUp className="h-8 w-8" />
@@ -1576,6 +1918,85 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               ))}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Buy Credits Modal - Redesigned */}
+      <Dialog open={showInsufficientCreditsModal} onOpenChange={setShowInsufficientCreditsModal}>
+        <DialogContent className="max-w-7xl w-[98vw] max-h-[80vh] overflow-y-auto bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-red-500/30 text-white rounded-2xl shadow-2xl">
+          {/* Header with Back Arrow - Compact */}
+          <div className="flex items-center justify-between py-2 border-b border-gray-700">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInsufficientCreditsModal(false)}
+                className="p-2 hover:bg-gray-700 rounded-full"
+              >
+                <ArrowLeft className="h-4 w-4 text-gray-400" />
+              </Button>
+              <h3 className="text-lg font-bold text-white">Buy Credits</h3>
+            </div>
+            <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+          </div>
+
+          {insufficientCreditsData && (
+            <div className="py-3">
+              {/* Horizontal Layout - Full Width */}
+              <div className="flex flex-col lg:flex-row gap-6">
+                
+                {/* Left Section - Credit Info (Compact) */}
+                <div className="lg:w-1/3">
+                  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/50">
+                    <h4 className="text-base font-semibold text-gray-300 mb-3 flex items-center">
+                      <CreditCard className="h-4 w-4 mr-2 text-blue-400" />
+                      Your Balance
+                    </h4>
+                    
+                    <div className="bg-gray-700/30 rounded-lg p-3 text-center">
+                      <span className="text-white font-bold text-3xl">{insufficientCreditsData.available}</span>
+                      <p className="text-gray-400 text-xs mt-1">Available Credits</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Section - Action Buttons (Horizontal) */}
+                <div className="lg:w-2/3">
+                  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/50">
+                    <h4 className="text-base font-semibold text-gray-300 mb-3">Purchase Credits</h4>
+                    
+                    {/* Horizontal Button Layout */}
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      <Button
+                        onClick={() => {
+                          setShowInsufficientCreditsModal(false);
+                          alert('🚀 Buy Credits feature coming soon!\n\nFor now, contact admin to add credits to your account.\n\n💡 Tip: Use the admin panel to add credits instantly!');
+                        }}
+                        className="flex-1 min-w-[200px] bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-3 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-green-500/25"
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Buy Credits Now
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowInsufficientCreditsModal(false)}
+                        className="flex-1 min-w-[150px] border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 py-3"
+                      >
+                        Maybe Later
+                      </Button>
+                    </div>
+                    
+                    <p className="text-center text-xs text-gray-400 mt-3">
+                      🔒 Secure payment • Credits added instantly
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
