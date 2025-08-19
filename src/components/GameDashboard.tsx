@@ -377,51 +377,18 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
     { id: 'diamond', amount: 100, prize: '600 Credits', slots: 10 }
   ];
 
-  // Helper function to get demo data if user has minimal stats
-  const getDemoEnhancedStats = (realStats: any) => {
-    const baseWins = realStats?.wins || 0;
-    const baseMatches = realStats?.gamesPlayed || 0;
-    const baseExperience = realStats?.experience || 0;
-    
-    // If user has minimal stats, add some demo enhancement for better UX
-    if (baseMatches < 5) {
-      return {
-        wins: baseWins + 15,
-        matches: baseMatches + 25,
-        experience: baseExperience + 150,
-        losses: (baseMatches + 25) - (baseWins + 15)
-      };
-    }
-    
-    return {
-      wins: baseWins,
-      matches: baseMatches,
-      experience: baseExperience,
-      losses: realStats?.losses || 0
-    };
-  };
-
-  const enhancedStats = getDemoEnhancedStats(user?.userData?.gameStats);
-
-  // User Profile Data - Using real data from authentication with demo enhancement
+  // User Profile Data - Using real data from authentication
   const userProfile = {
-    name: user?.userData?.name || user?.name || username,
-    email: user?.email || "not-provided@example.com",
-    uid: user?.$id || "UID-" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    freeFireUID: user?.userData?.username || user?.$id?.substr(-8).toUpperCase() || "FF" + Math.random().toString().substr(2, 8),
-    bio: "Gaming enthusiast ready for battle!", // Will be made dynamic later
-    level: enhancedStats.experience ? Math.floor(enhancedStats.experience / 100) + 1 : 1,
-    rank: user?.userData?.gameStats?.rank || (enhancedStats.experience > 200 ? "Advanced" : enhancedStats.experience > 100 ? "Intermediate" : "Beginner"),
-    wins: enhancedStats.wins,
-    losses: enhancedStats.losses,
-    kills: Math.floor(enhancedStats.wins * 3.5 + enhancedStats.experience * 0.1), // Calculated kills
-    matches: enhancedStats.matches,
-    winRate: enhancedStats.matches > 0 ? ((enhancedStats.wins / enhancedStats.matches * 100).toFixed(1)) : "0.0",
-    status: user ? "Active" : "Offline",
+    name: username,
+    freeFireUID: user?.userData?.username || "Not Set",
+    bio: "Gaming enthusiast", // Static for now, can be made editable later
+    level: user?.userData?.gameStats?.experience ? Math.floor(user.userData.gameStats.experience / 100) + 1 : 1,
+    rank: user?.userData?.gameStats?.rank || "Unranked",
+    wins: user?.userData?.gameStats?.wins || 0,
+    kills: user?.userData?.gameStats?.experience || 0, // Using experience as kills proxy for now
+    matches: user?.userData?.gameStats?.gamesPlayed || 0,
     walletBalance: walletBalance,
-    totalEarnings: Math.floor(enhancedStats.wins * 50 + enhancedStats.experience * 2), // Calculated earnings
-    joinDate: user?.userData?.createdAt ? new Date(user.userData.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
-    lastSeen: user ? "Now" : "Offline"
+    totalEarnings: user?.userData?.wallet?.totalEarnings || 0
   };
 
   // Recent matches - will be populated from real match history when implemented
@@ -1584,23 +1551,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                       Level {userProfile.level}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="text-sm font-medium text-gaming-cyan">{userProfile.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">User ID</p>
-                      <p className="text-sm font-medium text-gaming-cyan">{userProfile.uid}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${userProfile.status === 'Active' ? 'bg-green-400' : 'bg-gray-400'}`}></div>
-                        <p className={`text-sm font-medium ${userProfile.status === 'Active' ? 'text-green-400' : 'text-gray-400'}`}>{userProfile.status}</p>
-                      </div>
-                    </div>
-                  </div>
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Free Fire UID</p>
@@ -1614,16 +1564,6 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Joined</p>
-                      <p className="text-sm font-medium text-muted-foreground">{userProfile.joinDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Last Seen</p>
-                      <p className="text-sm font-medium text-muted-foreground">{userProfile.lastSeen}</p>
-                    </div>
-                  </div>
                   <p className="text-muted-foreground italic">{userProfile.bio}</p>
                 </div>
                 <Button variant="outline" size="sm">
@@ -1634,7 +1574,7 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardContent className="p-4 text-center">
                   <Trophy className="h-8 w-8 text-gaming-cyan mx-auto mb-2" />
@@ -1659,15 +1599,8 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
               <Card className="bg-gradient-card border-gaming-purple/30">
                 <CardContent className="p-4 text-center">
                   <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-foreground">{userProfile.matches > 0 ? Math.round((userProfile.wins / userProfile.matches) * 100) : 0}%</p>
+                  <p className="text-2xl font-bold text-foreground">{Math.round((userProfile.wins / userProfile.matches) * 100)}%</p>
                   <p className="text-sm text-muted-foreground">Win Rate</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-card border-gaming-purple/30">
-                <CardContent className="p-4 text-center">
-                  <TrendingUp className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-foreground">{userProfile.totalEarnings}</p>
-                  <p className="text-sm text-muted-foreground">Total Earned</p>
                 </CardContent>
               </Card>
             </div>
@@ -1990,9 +1923,9 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
 
       {/* Buy Credits Modal - Redesigned */}
       <Dialog open={showInsufficientCreditsModal} onOpenChange={setShowInsufficientCreditsModal}>
-        <DialogContent className="max-w-7xl w-[98vw] max-h-[80vh] overflow-y-auto bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-red-500/30 text-white rounded-2xl shadow-2xl">
-          {/* Header with Back Arrow - Compact */}
-          <div className="flex items-center justify-between py-2 border-b border-gray-700">
+        <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-red-500/30 text-white rounded-2xl shadow-2xl">
+          {/* Header with Back Arrow */}
+          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
             <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
@@ -2000,68 +1933,66 @@ const GameDashboard = ({ username, onLogout }: GameDashboardProps) => {
                 onClick={() => setShowInsufficientCreditsModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-full"
               >
-                <ArrowLeft className="h-4 w-4 text-gray-400" />
+                <ArrowLeft className="h-5 w-5 text-gray-400" />
               </Button>
-              <h3 className="text-lg font-bold text-white">Buy Credits</h3>
+              <h3 className="text-xl font-bold text-white">Buy Credits</h3>
             </div>
-            <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+              <AlertTriangle className="h-6 w-6 text-red-400" />
             </div>
           </div>
 
           {insufficientCreditsData && (
-            <div className="py-3">
-              {/* Horizontal Layout - Full Width */}
-              <div className="flex flex-col lg:flex-row gap-6">
+            <div className="py-4">
+              {/* Main Content Grid - Two Columns */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* Left Section - Credit Info (Compact) */}
-                <div className="lg:w-1/3">
-                  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/50">
-                    <h4 className="text-base font-semibold text-gray-300 mb-3 flex items-center">
-                      <CreditCard className="h-4 w-4 mr-2 text-blue-400" />
-                      Your Balance
+                {/* Left Column - Credit Breakdown */}
+                <div className="lg:col-span-1">
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-600/50 h-fit">
+                    <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center">
+                      <CreditCard className="h-5 w-5 mr-2 text-blue-400" />
+                      Credit Breakdown
                     </h4>
                     
-                    <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                      <span className="text-white font-bold text-3xl">{insufficientCreditsData.available}</span>
-                      <p className="text-gray-400 text-xs mt-1">Available Credits</p>
+                    <div className="space-y-4">
+                      <div className="bg-gray-700/30 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-400 text-sm">Your Balance:</span>
+                        </div>
+                        <span className="text-white font-bold text-2xl">{insufficientCreditsData.available}</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Right Section - Action Buttons (Horizontal) */}
-                <div className="lg:w-2/3">
-                  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/50">
-                    <h4 className="text-base font-semibold text-gray-300 mb-3">Purchase Credits</h4>
-                    
-                    {/* Horizontal Button Layout */}
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      <Button
-                        onClick={() => {
-                          setShowInsufficientCreditsModal(false);
-                          alert('🚀 Buy Credits feature coming soon!\n\nFor now, contact admin to add credits to your account.\n\n💡 Tip: Use the admin panel to add credits instantly!');
-                        }}
-                        className="flex-1 min-w-[200px] bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-3 rounded-xl text-base transition-all duration-200 shadow-lg hover:shadow-green-500/25"
-                      >
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Buy Credits Now
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowInsufficientCreditsModal(false)}
-                        className="flex-1 min-w-[150px] border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 py-3"
-                      >
-                        Maybe Later
-                      </Button>
-                    </div>
-                    
-                    <p className="text-center text-xs text-gray-400 mt-3">
-                      🔒 Secure payment • Credits added instantly
-                    </p>
                   </div>
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3 mt-8">
+                <Button
+                  onClick={() => {
+                    setShowInsufficientCreditsModal(false);
+                    // TODO: Implement buy credits functionality
+                    alert('🚀 Buy Credits feature coming soon!\n\nFor now, contact admin to add credits to your account.\n\n💡 Tip: Use the admin panel to add credits instantly!');
+                  }}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-4 rounded-xl text-lg transition-all duration-200 shadow-lg hover:shadow-green-500/25"
+                >
+                  <CreditCard className="h-5 w-5 mr-3" />
+                  Buy Credits Now
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInsufficientCreditsModal(false)}
+                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+              
+              <p className="text-center text-sm text-gray-400 mt-4">
+                🔒 Secure payment • Credits added instantly
+              </p>
             </div>
           )}
         </DialogContent>

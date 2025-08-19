@@ -248,8 +248,9 @@ class AuthService {
       await account.get();
       return true;
     } catch (error: any) {
-      // Don't log errors when user is simply not logged in
-      if (!error.message?.includes('unauthorized') && 
+      // Don't log errors for admin routes or when user is simply not logged in
+      if (!window.location.pathname.startsWith('/admin') && 
+          !error.message?.includes('unauthorized') && 
           !error.message?.includes('401')) {
         console.warn('Authentication check failed:', error.message);
       }

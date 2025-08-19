@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AntiCheatSystem from "@/components/AntiCheatSystem";
 import UserProtectionSystem from "@/components/UserProtectionSystem";
-import { useAuth } from "@/contexts/AuthContext";
-import { databases, appwriteConfig } from "@/lib/appwrite";
 import { 
   Shield, 
   Users, 
@@ -106,7 +104,6 @@ interface SuspiciousActivity {
 }
 
 const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -115,7 +112,6 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [banReason, setBanReason] = useState('');
   const [suspensionDays, setSuspensionDays] = useState(7);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Get admin role and permissions
   const adminRole = ADMIN_ROLES[username as keyof typeof ADMIN_ROLES] || ADMIN_ROLES['moderator'];
@@ -123,164 +119,48 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
     return adminRole.permissions.includes('all') || adminRole.permissions.includes(permission);
   };
 
-  // Real user data from Appwrite - replace hardcoded data
-  const [users, setUsers] = useState<User[]>([]);
-
-  // Fetch real users from Appwrite on component mount
-  useEffect(() => {
-    const fetchRealUsers = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Check if Appwrite configuration is available
-        if (!appwriteConfig.databaseId || !appwriteConfig.userCollectionId) {
-          console.warn('Appwrite configuration missing, using fallback data');
-          throw new Error('Appwrite configuration incomplete');
-        }
-        
-        // Try to fetch real users from Appwrite
-        const response = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.userCollectionId
-        );
-        
-        // Transform Appwrite user documents into our User interface
-        const realUsers: User[] = response.documents.map((doc: any, index: number) => {
-          const gameStats = doc.gameStats || {};
-          const winRate = gameStats.gamesPlayed > 0 ? 
-            ((gameStats.wins || 0) / gameStats.gamesPlayed * 100).toFixed(1) : 
-            "0.0";
-          
-          // Calculate investment amount based on game stats for demo
-          const investmentAmount = (gameStats.gamesPlayed || 0) * 50 + (gameStats.wins || 0) * 100;
-          
-          // Determine risk level based on win rate and suspicious activity
-          const winRateNum = parseFloat(winRate);
-          let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
-          
-          if (winRateNum > 90) riskLevel = 'critical';
-          else if (winRateNum > 70) riskLevel = 'high';
-          else if (winRateNum > 50) riskLevel = 'medium';
-          
-          return {
-            id: doc.$id,
-            username: doc.username || doc.name || `User${index + 1}`,
-            email: doc.email || `user${index + 1}@example.com`,
-            status: 'active' as const, // Default to active, can be managed by admin
-            joinDate: doc.createdAt ? new Date(doc.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            lastActive: doc.updatedAt ? new Date(doc.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            gamesPlayed: gameStats.gamesPlayed || 0,
-            winRate: parseFloat(winRate),
-            suspiciousActivity: winRateNum > 85 ? Math.floor(Math.random() * 10) + 5 : Math.floor(Math.random() * 3),
-            investmentAmount: investmentAmount || 100,
-            riskLevel: riskLevel
-          };
-        });
-        
-        // If real users were fetched successfully, use them
-        if (realUsers.length > 0) {
-          setUsers(realUsers);
-        } else {
-          // Use demo data with current user if no users found
-          setUsers(getFallbackUsers());
-        }
-        
-      } catch (error) {
-        console.error('Error fetching users from Appwrite:', error);
-        // Always fall back to demo users to ensure admin panel works
-        setUsers(getFallbackUsers());
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const getFallbackUsers = (): User[] => {
-      return [
-        // Add current user if available
-        ...(user ? [{
-          id: user.$id,
-          username: user.userData?.username || user.name || username,
-          email: user.email,
-          status: 'active' as const,
-          joinDate: user.userData?.createdAt ? new Date(user.userData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          lastActive: new Date().toISOString().split('T')[0],
-          gamesPlayed: user.userData?.gameStats?.gamesPlayed || 25,
-          winRate: user.userData?.gameStats?.winRate || 45.2,
-          suspiciousActivity: 0,
-          investmentAmount: 2500,
-          riskLevel: 'low' as const
-        }] : []),
-        // Demo users for demonstration
-        {
-          id: 'demo_user_1',
-          username: 'ActivePlayer1',
-          email: 'player1@example.com',
-          status: 'active',
-          joinDate: '2024-06-15',
-          lastActive: '2024-08-01',
-          gamesPlayed: 156,
-          winRate: 45.2,
-          suspiciousActivity: 0,
-          investmentAmount: 850,
-          riskLevel: 'low'
-        },
-        {
-          id: 'demo_suspicious',
-          username: 'SuspiciousGamer',
-          email: 'suspicious@example.com',
-          status: 'active',
-          joinDate: '2024-07-20',
-          lastActive: '2024-08-01',
-          gamesPlayed: 50,
-          winRate: 94.5,
-          suspiciousActivity: 8,
-          investmentAmount: 120,
-          riskLevel: 'high'
-        },
-        {
-          id: 'demo_banned',
-          username: 'BannedUser',
-          email: 'banned@example.com',
-          status: 'banned',
-          joinDate: '2024-06-10',
-          lastActive: '2024-07-25',
-          gamesPlayed: 23,
-          winRate: 98.2,
-          suspiciousActivity: 15,
-          investmentAmount: 150,
-          riskLevel: 'critical'
-        },
-        {
-          id: 'demo_regular',
-          username: 'RegularPlayer',
-          email: 'regular@example.com',
-          status: 'active',
-          joinDate: '2024-05-15',
-          lastActive: '2024-08-01',
-          gamesPlayed: 89,
-          winRate: 36.0,
-          suspiciousActivity: 1,
-          investmentAmount: 450,
-          riskLevel: 'low'
-        },
-        {
-          id: 'demo_pro',
-          username: 'ProGamer2024',
-          email: 'pro@example.com',
-          status: 'active',
-          joinDate: '2024-03-10',
-          lastActive: '2024-08-01',
-          gamesPlayed: 245,
-          winRate: 67.8,
-          suspiciousActivity: 2,
-          investmentAmount: 1200,
-          riskLevel: 'medium'
-        }
-      ];
-    };
-
-    fetchRealUsers();
-  }, [user, username]);
+  // Mock data - replace with actual API calls
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      username: 'Player123',
+      email: 'player123@example.com',
+      status: 'active',
+      joinDate: '2024-01-15',
+      lastActive: '2024-07-31',
+      gamesPlayed: 156,
+      winRate: 45.2,
+      suspiciousActivity: 0,
+      investmentAmount: 2500,
+      riskLevel: 'low'
+    },
+    {
+      id: '2',
+      username: 'SuspiciousGamer',
+      email: 'suspicious@example.com',
+      status: 'active',
+      joinDate: '2024-07-20',
+      lastActive: '2024-08-01',
+      gamesPlayed: 50,
+      winRate: 94.5,
+      suspiciousActivity: 8,
+      investmentAmount: 500,
+      riskLevel: 'high'
+    },
+    {
+      id: '3',
+      username: 'BannedUser',
+      email: 'banned@example.com',
+      status: 'banned',
+      joinDate: '2024-06-10',
+      lastActive: '2024-07-25',
+      gamesPlayed: 23,
+      winRate: 98.2,
+      suspiciousActivity: 15,
+      investmentAmount: 150,
+      riskLevel: 'critical'
+    }
+  ]);
 
   const [gameSchedules, setGameSchedules] = useState<GameSchedule[]>([
     {
@@ -774,116 +654,85 @@ const AdminPanel = ({ onLogout, onBackToDashboard, username }: AdminPanelProps) 
 
             <Card className="bg-black border-gray-600">
               <CardContent className="p-0">
-                {isLoading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    <p className="mt-4 text-gray-400">Loading real user data...</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-800 border-b border-gray-600">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Games</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Win Rate</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Credits</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Risk</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-black divide-y divide-gray-700">
-                        {filteredUsers.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-900 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-white">{user.username}</div>
-                                <div className="text-sm text-gray-300">{user.email}</div>
-                                <div className="text-xs text-gray-500">UID: {user.id.length > 10 ? user.id.substr(-8).toUpperCase() : user.id.toUpperCase()}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge className={
-                                user.status === 'active' ? 'bg-green-600/20 text-green-300 border-green-500/50' :
-                                user.status === 'banned' ? 'bg-red-600/20 text-red-300 border-red-500/50' :
-                                'bg-yellow-600/20 text-yellow-300 border-yellow-500/50'
-                              }>
-                                {user.status}
-                              </Badge>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {user.gamesPlayed} played<br/>
-                                {Math.round((user.gamesPlayed - user.winRate/100 * user.gamesPlayed))} losses<br/>
-                                {Math.round(user.winRate/100 * user.gamesPlayed * 3.5)} kills
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                              <div className="font-medium">{user.gamesPlayed}</div>
-                              <div className="text-xs text-green-400">{Math.round(user.winRate/100 * user.gamesPlayed)} wins</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                              <div className="font-medium">{user.winRate}%</div>
-                              <div className="text-xs text-gray-400">
-                                {user.winRate > 80 ? '⚠️ Very High' : user.winRate > 60 ? '📈 High' : user.winRate > 40 ? '📊 Normal' : '📉 Low'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                              <div className="font-medium">{Math.floor(user.investmentAmount * 0.6)} Credits</div>
-                              <div className="text-xs text-gray-400">Total: {user.investmentAmount}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge className={getRiskBadgeColor(user.riskLevel)}>
-                                {user.riskLevel}
-                              </Badge>
-                              {user.suspiciousActivity > 0 && (
-                                <div className="text-xs text-orange-400 mt-1">
-                                  ⚠️ {user.suspiciousActivity} alerts
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-800 border-b border-gray-600">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Games</th>
+                        
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Investment</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-black divide-y divide-gray-700">
+                      {filteredUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-900 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-white">{user.username}</div>
+                              <div className="text-sm text-gray-300">{user.email}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge className={
+                              user.status === 'active' ? 'bg-green-600/20 text-green-300 border-green-500/50' :
+                              user.status === 'banned' ? 'bg-red-600/20 text-red-300 border-red-500/50' :
+                              'bg-yellow-600/20 text-yellow-300 border-yellow-500/50'
+                            }>
+                              {user.status}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            {user.gamesPlayed}
+                          </td>
+                          
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            ₹{user.investmentAmount.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowUserModal(true);
+                                }}
+                                className="border-gray-600 text-white hover:bg-gray-800"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {user.status === 'active' && (
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant="destructive"
                                   onClick={() => {
                                     setSelectedUser(user);
                                     setShowUserModal(true);
                                   }}
+                                >
+                                  <Ban className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {user.status === 'banned' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUnbanUser(user.id)}
                                   className="border-gray-600 text-white hover:bg-gray-800"
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <UserCheck className="h-4 w-4" />
                                 </Button>
-                                {user.status === 'active' && (
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setSelectedUser(user);
-                                      setShowUserModal(true);
-                                    }}
-                                  >
-                                    <Ban className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {user.status === 'banned' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleUnbanUser(user.id)}
-                                    className="border-gray-600 text-white hover:bg-gray-800"
-                                  >
-                                    <UserCheck className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

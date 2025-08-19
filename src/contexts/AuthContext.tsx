@@ -9,6 +9,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<UserData>) => Promise<void>;
   updateGameStats: (gameResult: 'win' | 'loss') => Promise<void>;
+  deductMatchEntry: (amount: number, matchDetails: any) => Promise<void>;
+  getWalletBalance: () => Promise<number>;
   isAuthenticated: boolean;
 }
 
@@ -38,6 +40,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
+      
+      // Skip auth check if we're on admin routes to avoid Appwrite errors
+      if (window.location.pathname.startsWith('/admin')) {
+        setUser(null);
+        return;
+      }
       
       const isAuth = await authService.isAuthenticated();
       if (isAuth) {
@@ -125,6 +133,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deductMatchEntry = async (amount: number, matchDetails: any) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      
+      // Simple wallet deduction simulation
+      // In a real app, this would call a backend API
+      console.log(`Deducting ${amount} credits for match:`, matchDetails);
+      
+      // For now, just update the local state
+      // This could be enhanced to actually update Appwrite user data
+      
+    } catch (error) {
+      console.error('Deduct match entry error:', error);
+      throw error;
+    }
+  };
+
+  const getWalletBalance = async (): Promise<number> => {
+    try {
+      if (!user) return 0;
+      
+      // Simple wallet balance calculation based on game stats
+      // In a real app, this would fetch from backend/Appwrite
+      const gameStats = user.userData?.gameStats;
+      const baseBalance = 850; // Default starting balance
+      const bonusFromWins = (gameStats?.wins || 0) * 50;
+      const bonusFromExperience = (gameStats?.experience || 0) * 2;
+      
+      return baseBalance + bonusFromWins + bonusFromExperience;
+      
+    } catch (error) {
+      console.error('Get wallet balance error:', error);
+      return 0;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -133,6 +177,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateProfile,
     updateGameStats,
+    deductMatchEntry,
+    getWalletBalance,
     isAuthenticated: !!user,
   };
 
